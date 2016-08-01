@@ -28,19 +28,8 @@ BY_PIXEL_ACTION_DIFFS = {
     7 : numpy.array([-1, -1], dtype = 'int8')
 }
 
-SQRT_OF_2 = 2.0 ** 0.5
-BY_PIXEL_STEP_SIZES = {
-    0 : 1.0,
-    1 : SQRT_OF_2,
-    2 : 1.0,
-    3 : SQRT_OF_2,
-    4 : 1.0,
-    5 : SQRT_OF_2,
-    6 : SQRT_OF_2,
-    7 : 1.0
-}
-
 DONE_REWARD = 10000
+OBSTACLE_PUNISHMENT = DONE_REWARD
 
 class StateLayers:
     OBSTACLE = 0
@@ -111,12 +100,12 @@ class PathFindingByPixelEnv(gym.Env):
         self.state = None
         self.cur_position_discrete = None
         self.step_number = None
-        self.cur_segment_i = None
-        self.steps_done_along_cur_segment = None
-        self.min_segment_leftover = None
-        self.min_obstacle_punishment = None
-        self.reward_type = None
-        self.scale = None
+        self.goal_error = None
+        self.cur_target_i = None
+        self.obstacle_punishment = None
+        self.local_goal_reward = None
+        self.monitor_scale = None
+        self.stop_game_after_invalid_action = None
 
     def _step(self, action):
         new_position = self.cur_position_discrete + BY_PIXEL_ACTION_DIFFS[action]
@@ -130,34 +119,22 @@ class PathFindingByPixelEnv(gym.Env):
             reward = DONE_REWARD
         else:
             goes_out_of_field = any(new_position < 0) or any(new_position + 1 > self.cur_task.local_map.shape)
-            goes_to_obstacle = goes_out_of_field or self.state[(StateLayers.OBSTACLE,) + tuple(new_position)] > 0
-            invalid_step = goes_to_obstacle or goes_out_of_field
+            invalid_step = goes_out_of_field or self.state[(StateLayers.OBSTACLE,) + tuple(new_position)] > 0
             if invalid_step:
-                reward = -self.min_obstacle_punishment
+                reward = -self.obstacle_punishment
+                logger.debug('Obstacle or out!')
+                if self.stop_game_after_invalid_action:
+                    done = True
             else:
-                step_size = BY_PIXEL_STEP_SIZES[action]
-                while True:
-                    cur_seg_start = numpy.array(self.cur_task.path[self.cur_segment_i], dtype = 'int8')
-                    cur_seg_end = numpy.array(self.cur_task.path[self.cur_segment_i + 1], dtype = 'int8')
-                    cur_seg_dir = cur_seg_end - cur_seg_start
-                    cur_gold_pos = cur_seg_dir * self.steps_done_along_cur_segment
-                    next_gold_pos = cur_gold_pos + cur_seg_dir * step_size
-                    if euclidean(next_gold_pos, cur_seg_end) > self.min_segment_leftover:
-                        break
-                    else:
-                        self.cur_segment_i += 1
-                        self.steps_done_along_cur_segment = 0
+                cur_target_dist = euclidean(new_position, self.cur_task.path[self.cur_target_i])
+                if cur_target_dist < self.goal_error:
+                    reward = self.local_goal_reward
+                    if self.cur_target_i < len(self.cur_task.path) - 1:
+                        self.cur_target_i += 1
+                else:
+                    reward = -cur_target_dist
 
-                cur_dist = euclidean(self.cur_position_discrete, cur_gold_pos)
-                next_dist = euclidean(new_position, next_gold_pos)
-
-                logger.debug('Cur gold point is  %s, dist %s' % (cur_gold_pos, cur_dist))
-                logger.debug('Next gold point is %s, dist %s' % (cur_gold_pos, next_dist))
-                
-                if self.reward_type == 'abs':
-                    reward = -next_dist
-                elif self.reward_type == 'diff':
-                    reward = cur_dist - next_dist # if next distance is smaller, we encourage the agent and punish otherwise
+                logger.debug('Cur target dist is %s' % cur_target_dist)
 
                 self.cur_position_discrete += BY_PIXEL_ACTION_DIFFS[action]
                 self.state[(StateLayers.WALKED,) + tuple(self.cur_position_discrete)] = 1
@@ -177,30 +154,30 @@ class PathFindingByPixelEnv(gym.Env):
         self.state[(StateLayers.GOAL,) + self.cur_task.finish] = 1
 
         self.step_number = 0
-        self.cur_segment_i = 0
-        self.steps_done_along_cur_segment = 0
+        self.cur_target_i = 0
         logger.info('Environment %s has been reset' % self.__class__.__name__)
         return self.state
 
     def _render(self, mode = 'human', close = False):
-        return render_state(self.state, mode = mode, scale = self.scale)
+        return render_state(self.state, mode = mode, scale = self.monitor_scale)
 
     def _configure(self,
                    tasks_dir = 'data/samples/imported',
                    map_shape = (501, 501),
-                   min_segment_leftover = 0.1,
-                   min_obstacle_punishment = 10000.0,
-                   reward_type = 'abs',
-                   scale = 2):
-        assert reward_type in ('abs', 'diff')
+                   goal_error = 1,
+                   obstacle_punishment = OBSTACLE_PUNISHMENT,
+                   local_goal_reward = 100,
+                   monitor_scale = 2,
+                   stop_game_after_invalid_action = True):
         self.observation_space = gym.spaces.Box(low = 0,
                                                 high = 1,
                                                 shape = (StateLayers.LAYERS_NUM,) + map_shape)
         self.task_set = TaskSet(tasks_dir)
-        self.min_segment_leftover = min_segment_leftover
-        self.min_obstacle_punishment = min_obstacle_punishment
-        self.reward_type = reward_type
-        self.scale = scale
+        self.goal_error = goal_error
+        self.obstacle_punishment = obstacle_punishment
+        self.local_goal_reward = local_goal_reward
+        self.monitor_scale = monitor_scale
+        self.stop_game_after_invalid_action = stop_game_after_invalid_action
 
     def _seed(self, seed = None):
         self.np_random, seed1 = gym.utils.seeding.np_random(seed)
