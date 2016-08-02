@@ -28,7 +28,7 @@ BY_PIXEL_ACTION_DIFFS = {
     7 : numpy.array([-1, -1], dtype = 'int8')
 }
 
-DONE_REWARD = 10000
+DONE_REWARD = 0
 OBSTACLE_PUNISHMENT = DONE_REWARD
 
 class StateLayers:
@@ -83,6 +83,8 @@ STATE_RENDERERS = {
     'ansi' : render_ansi,
     'rgb_array' : render_rgb
 }
+
+heatmap = {}
 
 def render_state(state, mode = 'human', **kwargs):
     assert mode in STATE_RENDERERS
@@ -165,10 +167,10 @@ class PathFindingByPixelEnv(gym.Env):
                    tasks_dir = 'data/samples/imported',
                    map_shape = (501, 501),
                    goal_error = 1,
-                   obstacle_punishment = OBSTACLE_PUNISHMENT,
-                   local_goal_reward = 100,
+                   obstacle_punishment = 10,
+                   local_goal_reward = 10000,
                    monitor_scale = 2,
-                   stop_game_after_invalid_action = True):
+                   stop_game_after_invalid_action = False):
         self.observation_space = gym.spaces.Box(low = 0,
                                                 high = 1,
                                                 shape = (StateLayers.LAYERS_NUM,) + map_shape)

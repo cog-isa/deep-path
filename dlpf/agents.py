@@ -29,12 +29,12 @@ class DqnAgent(object):
 
     def build_model(self):
         S = Input(shape=self.state_size)
-        h = Convolution2D(16, 8, 8, subsample=(4, 4),
-            border_mode='same', activation='relu')(S)
-        h = Convolution2D(32, 4, 4, subsample=(2, 2),
-            border_mode='same', activation='relu')(h)
-        h = Flatten()(h)
-        h = Dense(256, activation='relu')(h)
+        #h = Convolution2D(16, 8, 8, subsample=(4, 4),
+        #    border_mode='same', activation='relu')(S)
+        #h = Convolution2D(32, 4, 4, subsample=(2, 2),
+        #    border_mode='same', activation='relu')(h)
+        h = Flatten()(S)
+        h = Dense(100, activation='relu')(h)
         V = Dense(self.number_of_actions)(h)
         self.model = Model(S, V)
         try:
@@ -80,6 +80,7 @@ class DqnAgent(object):
 
     def act(self, state):
         self.states[-1].append(state)
+        #print state
         values = self.value_fn([state[None, :]])
         if numpy.random.random() < self.epsilon:
             action = numpy.random.randint(self.number_of_actions)
