@@ -15,6 +15,7 @@ env.monitor.start('data/sample/results/basic_dqn', force=True, seed=0)
 agent = DqnAgent(state_size = env.observation_space.shape,
                  number_of_actions = env.action_space.n,
                  save_name = env.__class__.__name__)
+agent.build_model()
 
 episode_count = 10000
 max_steps = 50
@@ -25,7 +26,7 @@ for _ in xrange(episode_count):
     for __ in range(max_steps):
         action, values = agent.act(observation)
         observation, reward, done, info = env.step(action)
-        agent.observe(reward)
+        agent.observe(reward, action)
         if done:
             break
     if _ % 100 == 99:
