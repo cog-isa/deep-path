@@ -14,7 +14,7 @@ BY_PIXEL_ACTIONS = {
     4 : 'S',
     5 : 'SW',
     6 : 'W',
-    7 : 'WN'
+    7 : 'NW'
 }
 
 BY_PIXEL_ACTION_DIFFS = {
@@ -28,8 +28,8 @@ BY_PIXEL_ACTION_DIFFS = {
     7 : numpy.array([-1, -1], dtype = 'int8')
 }
 
-DONE_REWARD = 0
-OBSTACLE_PUNISHMENT = DONE_REWARD
+DONE_REWARD = 10000
+OBSTACLE_PUNISHMENT = 10
 
 class StateLayers:
     OBSTACLE = 0
@@ -128,13 +128,16 @@ class PathFindingByPixelEnv(gym.Env):
                 if self.stop_game_after_invalid_action:
                     done = True
             else:
+                old_target_dist = euclidean(self.cur_position_discrete, self.cur_task.path[self.cur_target_i])
                 cur_target_dist = euclidean(new_position, self.cur_task.path[self.cur_target_i])
                 if cur_target_dist < self.goal_error:
                     reward = self.local_goal_reward
                     if self.cur_target_i < len(self.cur_task.path) - 1:
                         self.cur_target_i += 1
+                    else:
+                        done = True
                 else:
-                    reward = -cur_target_dist
+                    reward = (old_target_dist - cur_target_dist)*10
 
                 logger.debug('Cur target dist is %s' % cur_target_dist)
 
@@ -167,7 +170,7 @@ class PathFindingByPixelEnv(gym.Env):
                    tasks_dir = 'data/samples/imported',
                    map_shape = (501, 501),
                    goal_error = 1,
-                   obstacle_punishment = 10,
+                   obstacle_punishment = OBSTACLE_PUNISHMENT,
                    local_goal_reward = 10000,
                    monitor_scale = 2,
                    stop_game_after_invalid_action = False):
