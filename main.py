@@ -17,16 +17,16 @@ agent = DqnAgent(state_size = env.observation_space.shape,
                  save_name = env.__class__.__name__)
 agent.build_model()
 
-episode_count = 10000
-max_steps = 50
+episode_count = 100000
+max_steps = 100
 
 for _ in xrange(episode_count):
     observation = env.reset()
     agent.new_episode()
     for __ in range(max_steps):
-        action, values = agent.act(observation)
+        action, values = agent.act(observation, env.cur_position_discrete)
         observation, reward, done, info = env.step(action)
-        agent.observe(reward, action)
+        agent.observe(reward, action, env.cur_position_discrete)
         if done:
             break
     if _ % 100 == 99:

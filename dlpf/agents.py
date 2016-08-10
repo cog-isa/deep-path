@@ -1,9 +1,11 @@
 import random
 import numpy
+from scipy.spatial.distance import euclidean
 from keras.models import Model
 from keras.layers import Convolution2D, Dense, Flatten, Input, merge
 from keras.optimizers import RMSprop, Adam
 from keras import backend as K
+
 
 
 
@@ -24,15 +26,35 @@ class DqnAgent(object):
         self.experience = []
         self.i = 1
         self.save_freq = save_freq
+        self.vision_range = 3
+
+    def cut_seen(self, pos):
+        seen = numpy.ndarray(shape=(1, 2, 2*self.vision_range+1, 2*self.vision_range+1))
+        walls, target, path = self.states[-1][-1]
+        center_y, center_x = pos
+        height, width = len(walls), len(walls[0])
+        for dy in range(-self.vision_range, self.vision_range+1):
+            for dx in range(-self.vision_range, self.vision_range+1):
+                x, y = center_x+dx, center_y+dy
+                if x < 0 or x >= width or y < 0 or y >= height:
+                    seen[0][0][dx][dy] = 1
+                    seen[0][1][dx][dy] = 0
+                else:
+                    seen[0][0][dx][dy] = walls[y][x]
+                    seen[0][1][dx][dy] = target[y][x]*numpy.log1p(euclidean(pos, (y, x)))
+        #if max([max(i) for i in target]) == 0:
+        return seen
+
 
     def build_model(self):
-        S = Input(shape=self.state_size)
+        #S = Input(shape=self.state_size)
+        S = Input(shape=(2, 2*self.vision_range+1, 2*self.vision_range+1))
         #h = Convolution2D(16, 8, 8, subsample=(4, 4),
         #    border_mode='same', activation='relu')(S)
         #h = Convolution2D(32, 4, 4, subsample=(2, 2),
         #    border_mode='same', activation='relu')(h)
         h = Flatten()(S)
-        h = Dense(100, activation='relu')(h)
+        h = Dense(50, activation='relu')(h)
         V = Dense(self.number_of_actions)(h)
         self.model = Model(S, V)
         try:
@@ -53,10 +75,11 @@ class DqnAgent(object):
         if self.i % self.save_freq == 0:
             self.model.save_weights('{}.h5'.format(self.save_name), True)
 
-
-    def act(self, state):
+    def act(self, state, pos):
         self.states[-1].append(state)
-        values = self.model.predict([state[None, :]])
+        #values = self.model.predict([state[None, :]])
+        #print self.cut_seen(pos)
+        values = self.model.predict(self.cut_seen(pos))
         if numpy.random.random() < self.epsilon:
             action = numpy.random.randint(self.number_of_actions)
         else:
@@ -64,13 +87,14 @@ class DqnAgent(object):
         self.actions[-1].append(action)
         return action, values
 
-    def observe(self, reward, action):
+    def observe(self, reward, action, pos):
+        input_layer = self.cut_seen(pos)
         self.rewards[-1].append(reward)
-        input_layer = numpy.ndarray(shape=(1, 3, 10, 10))
-        input_layer[0] = [[[self.states[-1][-1][x][y][z]
-                            for z in range(len(self.states[-1][-1][x][y]))]
-                           for y in range(len(self.states[-1][-1][x]))]
-                          for x in range(len(self.states[-1][-1]))]
+        #input_layer = numpy.ndarray(shape=(1, 3, 10, 10))
+        #input_layer[0] = [[[self.states[-1][-1][x][y][z]
+        #                    for z in range(len(self.states[-1][-1][x][y]))]
+        #                   for y in range(len(self.states[-1][-1][x]))]
+        #                  for x in range(len(self.states[-1][-1]))]
         filled_reward = numpy.ndarray(shape=(1, self.number_of_actions))
         filled_reward[0][action] = reward
         self.model.fit(input_layer, filled_reward, nb_epoch=1, verbose=0)
