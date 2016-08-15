@@ -81,18 +81,18 @@ class DqnAgent(object):
                                   dtype = 'float32')
         output_batch = numpy.zeros((batch_size, self.number_of_actions),
                                    dtype = 'float32')
-        random.seed()
+        rand = random.Random()
         inputs = []
         outputs = []
-        print starting_from, len(self.states), len(self.states[0])
+        #print starting_from, len(self.states), len(self.states[0])
         for i in range(len(self.states)):
             inputs += self.states[i]
             outputs += self.rewards[i]
-        print 'length:', len(inputs)
+        #print 'length:', len(inputs)
         if len(inputs) == len(outputs):
             unused = set(range(len(outputs)))
             while len(unused) > 0:
-                batch_indexes = random.sample(unused, batch_size)
+                batch_indexes = rand.sample(unused, batch_size)
                 #for i in batch_indexes:
                 #    unused.remove(i)
                 j = 0
@@ -105,12 +105,17 @@ class DqnAgent(object):
                 j = 0
                 for i in batch_indexes:
                     for x in xrange(self.number_of_actions):
-                        output_batch[j][x] = outputs[i][0][x]
+                        if outputs[i][0][x]>100000 or outputs[i][0][x]<-100000 or numpy.isnan(outputs[i][0][x]):
+                            output_batch[j][x] = 0
+                        else:
+                            output_batch[j][x] = outputs[i][0][x]
                     j += 1
 
-                yield {'input': input_batch,
-                       'output': output_batch}
-                #yield [input_batch, output_batch]
+                #yield {'input': input_batch,
+                #      'output': output_batch}
+                #print input_batch
+                #print output_batch
+                yield [input_batch, output_batch]
 
     def act(self, state, pos):
         self.states[-1].append(self.cut_seen(state, pos))
@@ -126,23 +131,19 @@ class DqnAgent(object):
 
     def observe(self, reward, action, pos):
         input_layer = self.states[-1][-1]
-        #input_layer = numpy.ndarray(shape=(1, 3, 10, 10))
-        #input_layer[0] = [[[self.states[-1][-1][x][y][z]
-        #                    for z in range(len(self.states[-1][-1][x][y]))]
-        #                   for y in range(len(self.states[-1][-1][x]))]
-        #                  for x in range(len(self.states[-1][-1]))]
         filled_reward = numpy.ndarray(shape=(1, self.number_of_actions))
         filled_reward[0][action] = reward
         self.rewards[-1].append(filled_reward)
+        #print filled_reward
         #self.model.fit(input_layer, filled_reward, nb_epoch=1, verbose=0)
 
     def train_with_full_experience(self, start):
         batches = self.generate_batches(batch_size=100,
                                         starting_from=start)
         self.model.fit_generator(batches,
-                                 samples_per_epoch=len(self.states*100),
+                                 samples_per_epoch=len(self.states*10),
                                  nb_epoch=10,
-                                 verbose=1)
+                                 verbose=2)
 
 
 class RandomAgent(object):
