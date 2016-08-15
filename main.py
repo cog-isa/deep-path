@@ -17,7 +17,7 @@ agent = DqnAgent(state_size = env.observation_space.shape,
                  save_name = env.__class__.__name__)
 agent.build_model()
 
-episode_count = 100000
+episode_count = 5000
 max_steps = 100
 
 for _ in xrange(episode_count):
@@ -30,4 +30,6 @@ for _ in xrange(episode_count):
         if done:
             break
     if _ % 100 == 99:
-        print _ + 1
+        print 'iteration:', _ + 1
+    #if _ % 10 == 9:
+        agent.train_with_full_experience(_ - 999)
