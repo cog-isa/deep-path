@@ -28,7 +28,7 @@ BY_PIXEL_ACTION_DIFFS = {
     7 : numpy.array([-1, -1], dtype = 'int8')
 }
 
-DONE_REWARD = 10000
+DONE_REWARD = 10
 OBSTACLE_PUNISHMENT = 10
 
 class StateLayers:
@@ -119,6 +119,7 @@ class PathFindingByPixelEnv(gym.Env):
         if done:
             logger.debug('Finished!')
             reward = DONE_REWARD
+            print 'FINISHED'
         else:
             goes_out_of_field = any(new_position < 0) or any(new_position + 1 > self.cur_task.local_map.shape)
             invalid_step = goes_out_of_field or self.state[(StateLayers.OBSTACLE,) + tuple(new_position)] > 0
@@ -127,6 +128,7 @@ class PathFindingByPixelEnv(gym.Env):
                 logger.debug('Obstacle or out!')
                 if self.stop_game_after_invalid_action:
                     done = True
+                print 'WALL'
             else:
                 old_target_dist = euclidean(self.cur_position_discrete, self.cur_task.path[self.cur_target_i])
                 cur_target_dist = euclidean(new_position, self.cur_task.path[self.cur_target_i])
@@ -137,13 +139,14 @@ class PathFindingByPixelEnv(gym.Env):
                     else:
                         done = True
                 else:
-                    reward = (old_target_dist - cur_target_dist)*10
+                    reward = (old_target_dist - cur_target_dist)*0
+                    reward = 0.1
 
                 logger.debug('Cur target dist is %s' % cur_target_dist)
 
                 self.cur_position_discrete += BY_PIXEL_ACTION_DIFFS[action]
                 self.state[(StateLayers.WALKED,) + tuple(self.cur_position_discrete)] = 1
-            logger.debug('Reward is %f' % reward)
+        logger.debug('Reward is %f' % reward)
         return self.state, reward, done, None
 
     def _reset(self):
@@ -171,7 +174,7 @@ class PathFindingByPixelEnv(gym.Env):
                    map_shape = (501, 501),
                    goal_error = 1,
                    obstacle_punishment = OBSTACLE_PUNISHMENT,
-                   local_goal_reward = 10000,
+                   local_goal_reward = 5,
                    monitor_scale = 2,
                    stop_game_after_invalid_action = False):
         self.observation_space = gym.spaces.Box(low = 0,

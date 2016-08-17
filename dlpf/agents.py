@@ -5,14 +5,12 @@ from keras.models import Model
 from keras.layers import Convolution2D, Dense, Flatten, Input, merge
 from keras.optimizers import RMSprop, Adam
 from keras import backend as K
-
-
-
+import matplotlib.pyplot as plt
 
 
 class DqnAgent(object):
     def __init__(self, state_size=None, number_of_actions=1,
-                 epsilon=0.1, mbsz=32, discount=0.9, memory=1000,
+                 epsilon=0.1, mbsz=32, discount=0.9, memory=100,
                  save_name='basic', save_freq=10):
         self.state_size = state_size
         self.number_of_actions = number_of_actions
@@ -27,7 +25,28 @@ class DqnAgent(object):
         self.experience = []
         self.i = 1
         self.save_freq = save_freq
-        self.vision_range = 5
+        self.vision_range = 4
+
+    def plot_layers(self, to_save=''):
+        wts = self.model.get_weights()
+        j = 0
+        for i in wts:
+            if len(i.shape) == 2:
+                j += 1
+                for c in range(i.shape[1]):
+                    if j == 1:
+                        border = int((i.shape[0]/2)**0.5)
+                    else:
+                        border = 2
+                    neuron_input = numpy.ndarray(shape=(border, i.shape[0]/border))
+                    for x in range(border):
+                        for y in range(i.shape[0]/border):
+                            neuron_input[x][y] = i[y*border+x][c]
+                    plt.imshow(neuron_input)
+                    if to_save:
+                        plt.imsave('imgs/'+'layer'+str(j)+'/'+to_save+'-neuron'+str(c)+'.png', neuron_input)
+                    else:
+                        plt.show()
 
     def cut_seen(self, state, pos):
         seen = numpy.ndarray(shape=(1, 2, 2*self.vision_range+1, 2*self.vision_range+1))
@@ -54,7 +73,7 @@ class DqnAgent(object):
         #h = Convolution2D(32, 4, 4, subsample=(2, 2),
         #    border_mode='same', activation='relu')(h)
         h = Flatten()(S)
-        h = Dense(50, activation='relu')(h)
+        h = Dense(10, activation='relu')(h)
         V = Dense(self.number_of_actions)(h)
         self.model = Model(S, V)
         try:
@@ -62,10 +81,20 @@ class DqnAgent(object):
             print "loading from {}.h5".format(self.save_name)
         except:
             print "Training a new model"
-        self.model.compile(RMSprop(), loss='categorical_crossentropy')
+        self.model.compile(RMSprop(), loss='mean_squared_error')
 
     def new_episode(self):
-        #print self.memory
+        if self.rewards:
+            t_end = len(self.rewards[-1])-1
+            for t in range(t_end, -1, -1):
+                mp = 0.85**(t_end+t)
+                for n in self.rewards[-1][t][0]:
+                    if n > 0.05 and max(self.rewards[-1][-1][0]) > 0.5:
+                        n = mp*max(self.rewards[-1][-1][0])
+                    #elif n > 0 and max(self.rewards[-1][-1][0]) < 0.5:
+                    #    n = -mp
+
+
         self.states.append([])
         self.actions.append([])
         self.rewards.append([])
@@ -76,7 +105,7 @@ class DqnAgent(object):
         if self.i % self.save_freq == 0:
             self.model.save_weights('{}.h5'.format(self.save_name), True)
 
-    def generate_batches(self, batch_size, starting_from=0, num_of_layers=2, width_of_layers=11, height_of_layers=11):
+    def generate_batches(self, batch_size, starting_from=0, num_of_layers=2, width_of_layers=9, height_of_layers=9):
         input_batch = numpy.zeros((batch_size, num_of_layers, width_of_layers, height_of_layers),
                                   dtype = 'float32')
         output_batch = numpy.zeros((batch_size, self.number_of_actions),
@@ -117,12 +146,12 @@ class DqnAgent(object):
                 #print output_batch
                 yield [input_batch, output_batch]
 
-    def act(self, state, pos):
+    def act(self, state, pos, epsilon=0.1):
         self.states[-1].append(self.cut_seen(state, pos))
         #values = self.model.predict([state[None, :]])
         #print self.cut_seen(pos)
         values = self.model.predict(self.states[-1][-1])
-        if numpy.random.random() < self.epsilon:
+        if numpy.random.random() < epsilon:
             action = numpy.random.randint(self.number_of_actions)
         else:
             action = values.argmax()
