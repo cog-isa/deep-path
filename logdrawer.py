@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 plt.interactive(False)
-step = 100
+step = 50
 epochs = step
 
 f = open('losslog.txt', 'r')
@@ -31,7 +31,7 @@ for i in filtered_reaches:
     elif i == 0:
         count_e += 1
     else:
-        count_w += 0.1
+        count_w += 1
     if count_e % step == 0 and count_e:
         finished.append(count_y/count_e)
         walls.append(count_w/count_e)
@@ -46,12 +46,13 @@ for i in range(len(filtered_loss)/epochs):
 
 x = np.arange(step, step*(len(means))+1, step)
 print len(finished), len(walls), len(x)
-plt.plot(x, means, color='b')
-plt.plot(x, finished, color='g')
-plt.plot(x, walls, color='r')
+plt.plot(x, means, color='b', lw=2)
+plt.plot(x, finished, color='g', lw=2)
+plt.plot(x, walls, color='r', lw=2)
 
 
-#x = range(0, 10000, 1)
-#y = [0.05 + 0.95*0.9996**i for i in x]
+#x = range(0, 5000, 1)
+#y = [0.05 + 0.95*0.999**i for i in x]
+#y = [10*0.9**i for i in x]
 #plt.plot(x, y, color='b')
 plt.show()

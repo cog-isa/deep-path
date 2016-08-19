@@ -17,7 +17,7 @@ agent = DqnAgent(state_size = env.observation_space.shape,
                  save_name = env.__class__.__name__)
 agent.build_model()
 
-episode_count = 15000
+episode_count = 5000
 max_steps = 100
 
 for _ in xrange(episode_count):

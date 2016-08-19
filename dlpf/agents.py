@@ -3,14 +3,14 @@ import numpy
 from scipy.spatial.distance import euclidean
 from keras.models import Model
 from keras.layers import Convolution2D, Dense, Flatten, Input, merge
-from keras.optimizers import RMSprop, Adam
+from keras.optimizers import RMSprop, Adagrad, Nadam, Adadelta
 from keras import backend as K
 import matplotlib.pyplot as plt
 
 
 class DqnAgent(object):
     def __init__(self, state_size=None, number_of_actions=1,
-                 epsilon=0.1, mbsz=32, discount=0.9, memory=100,
+                 epsilon=0.1, mbsz=32, discount=0.9, memory=250,
                  save_name='basic', save_freq=10):
         self.state_size = state_size
         self.number_of_actions = number_of_actions
@@ -61,7 +61,7 @@ class DqnAgent(object):
                     seen[0][1][dx][dy] = 0
                 else:
                     seen[0][0][dx][dy] = walls[y][x]
-                    seen[0][1][dx][dy] = target[y][x]*numpy.log1p(euclidean(pos, (y, x)))
+                    seen[0][1][dx][dy] = target[y][x]*10 #*numpy.log1p(euclidean(pos, (y, x)))
         #if max([max(i) for i in target]) == 0:
         return seen
 
@@ -73,7 +73,7 @@ class DqnAgent(object):
         #h = Convolution2D(32, 4, 4, subsample=(2, 2),
         #    border_mode='same', activation='relu')(h)
         h = Flatten()(S)
-        h = Dense(10, activation='relu')(h)
+        h = Dense(8, activation='relu')(h)
         V = Dense(self.number_of_actions)(h)
         self.model = Model(S, V)
         try:
@@ -81,15 +81,16 @@ class DqnAgent(object):
             print "loading from {}.h5".format(self.save_name)
         except:
             print "Training a new model"
-        self.model.compile(RMSprop(), loss='mean_squared_error')
+        'squared_hinge'
+        self.model.compile(Adadelta(), loss='squared_hinge')
 
     def new_episode(self):
         if self.rewards:
             t_end = len(self.rewards[-1])-1
             for t in range(t_end, -1, -1):
-                mp = 0.85**(t_end+t)
+                mp = 0.9**(t_end+t)
                 for n in self.rewards[-1][t][0]:
-                    if n > 0.05 and max(self.rewards[-1][-1][0]) > 0.5:
+                    if n > 0.005 and max(self.rewards[-1][-1][0]) > 0.015:
                         n = mp*max(self.rewards[-1][-1][0])
                     #elif n > 0 and max(self.rewards[-1][-1][0]) < 0.5:
                     #    n = -mp
@@ -161,7 +162,18 @@ class DqnAgent(object):
     def observe(self, reward, action, pos):
         input_layer = self.states[-1][-1]
         filled_reward = numpy.ndarray(shape=(1, self.number_of_actions))
-        filled_reward[0][action] = reward
+        if reward < 0.005:
+            for i in range(self.number_of_actions):
+                if i == action:
+                    filled_reward[0][i] = reward
+                else:
+                    filled_reward[0][i] = -reward
+        else:
+            for i in range(self.number_of_actions):
+                if i == action:
+                    filled_reward[0][i] = reward
+                else:
+                    filled_reward[0][i] = 0
         self.rewards[-1].append(filled_reward)
         #print filled_reward
         #self.model.fit(input_layer, filled_reward, nb_epoch=1, verbose=0)

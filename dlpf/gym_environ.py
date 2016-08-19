@@ -1,5 +1,6 @@
 from dlpf.io import *
 from scipy.spatial.distance import euclidean
+from random import randint
 import gym, gym.spaces, gym.utils
 
 
@@ -29,7 +30,7 @@ BY_PIXEL_ACTION_DIFFS = {
 }
 
 DONE_REWARD = 10
-OBSTACLE_PUNISHMENT = 10
+OBSTACLE_PUNISHMENT = 0.1
 
 class StateLayers:
     OBSTACLE = 0
@@ -80,11 +81,13 @@ def render_rgb(state, scale = 2):
 
 
 STATE_RENDERERS = {
-    'ansi' : render_ansi,
-    'rgb_array' : render_rgb
+    'ansi': render_ansi,
+    'rgb_array': render_rgb
 }
 
+
 heatmap = {}
+
 
 def render_state(state, mode = 'human', **kwargs):
     assert mode in STATE_RENDERERS
@@ -140,7 +143,7 @@ class PathFindingByPixelEnv(gym.Env):
                         done = True
                 else:
                     reward = (old_target_dist - cur_target_dist)*0
-                    reward = 0.1
+                    reward = 0.01
 
                 logger.debug('Cur target dist is %s' % cur_target_dist)
 
@@ -153,12 +156,13 @@ class PathFindingByPixelEnv(gym.Env):
         logger.info('Reset environment %s' % self.__class__.__name__)
         task_id = self.np_random.choice(self.task_set.keys())
         self.cur_task = self.task_set[task_id]
-        self.cur_position_discrete = numpy.array(self.cur_task.start, dtype = 'int8')
+        #self.cur_position_discrete = numpy.array(self.cur_task.start, dtype = 'int8')
+        self.cur_position_discrete = numpy.array((randint(0,9), randint(0,9)), dtype = 'int8')
 
         self.state = numpy.zeros(self.observation_space.shape,
                                  dtype = 'uint8')
         self.state[StateLayers.OBSTACLE] = self.cur_task.local_map
-        self.state[(StateLayers.WALKED,) + self.cur_task.start] = 1
+        #self.state[(StateLayers.WALKED,) + self.cur_position_discrete] = 1
         self.state[(StateLayers.GOAL,) + self.cur_task.finish] = 1
 
         self.step_number = 0
@@ -186,6 +190,127 @@ class PathFindingByPixelEnv(gym.Env):
         self.local_goal_reward = local_goal_reward
         self.monitor_scale = monitor_scale
         self.stop_game_after_invalid_action = stop_game_after_invalid_action
+
+    def _seed(self, seed = None):
+        self.np_random, seed1 = gym.utils.seeding.np_random(seed)
+        return [seed1]
+
+
+class ShouldBeNamedAndRewrittenLaterEnv(gym.Env):
+    metadata = { 'render.modes': STATE_RENDERERS.keys() }
+    action_space = gym.spaces.Discrete(len(BY_PIXEL_ACTIONS))
+
+    def __init__(self):
+        self.task_set = None
+        self.cur_task = None
+        self.observation_space = None
+        self.state = None
+        self.cur_position_discrete = None
+        self.step_number = None
+        self.goal_error = None
+        self.cur_target_i = None
+        self.obstacle_punishment = None
+        self.local_goal_reward = None
+        self.monitor_scale = None
+        self.stop_game_after_invalid_action = None
+
+    def cut_seen(self, state, pos):
+        seen = numpy.ndarray(shape=(1, 2, 2*self.vision_range+1, 2*self.vision_range+1))
+        walls, target, path = state
+        center_y, center_x = pos
+        height, width = len(walls), len(walls[0])
+        for dy in range(-self.vision_range, self.vision_range+1):
+            for dx in range(-self.vision_range, self.vision_range+1):
+                x, y = center_x+dx, center_y+dy
+                if x < 0 or x >= width or y < 0 or y >= height:
+                    seen[0][0][dx][dy] = 1
+                    seen[0][1][dx][dy] = 0
+                else:
+                    seen[0][0][dx][dy] = walls[y][x]
+                    seen[0][1][dx][dy] = target[y][x]*10
+        #if max([max(i) for i in target]) == 0:
+        return seen
+
+    def _step(self, action):
+        new_position = self.cur_position_discrete + BY_PIXEL_ACTION_DIFFS[action]
+        logger.debug('Actor decided to go %s from %s to %s' % (BY_PIXEL_ACTIONS[action],
+                                                               tuple(self.cur_position_discrete),
+                                                               tuple(new_position)))
+
+        done = all(new_position == self.cur_task.finish)
+        if done:
+            logger.debug('Finished!')
+            reward = DONE_REWARD
+            print 'FINISHED'
+        else:
+            goes_out_of_field = any(new_position < 0) or any(new_position + 1 > self.cur_task.local_map.shape)
+            invalid_step = goes_out_of_field or self.state[(StateLayers.OBSTACLE,) + tuple(new_position)] > 0
+            if invalid_step:
+                reward = -self.obstacle_punishment
+                logger.debug('Obstacle or out!')
+                if self.stop_game_after_invalid_action:
+                    done = True
+                print 'WALL'
+            else:
+                old_target_dist = euclidean(self.cur_position_discrete, self.cur_task.path[self.cur_target_i])
+                cur_target_dist = euclidean(new_position, self.cur_task.path[self.cur_target_i])
+                if cur_target_dist < self.goal_error:
+                    reward = self.local_goal_reward
+                    if self.cur_target_i < len(self.cur_task.path) - 1:
+                        self.cur_target_i += 1
+                    else:
+                        done = True
+                else:
+                    reward = (old_target_dist - cur_target_dist)*0
+                    reward = 0.01
+
+                logger.debug('Cur target dist is %s' % cur_target_dist)
+
+                self.cur_position_discrete += BY_PIXEL_ACTION_DIFFS[action]
+                self.state[(StateLayers.WALKED,) + tuple(self.cur_position_discrete)] = 1
+        logger.debug('Reward is %f' % reward)
+        return self.state, reward, done, None
+
+    def _reset(self):
+        logger.info('Reset environment %s' % self.__class__.__name__)
+        task_id = self.np_random.choice(self.task_set.keys())
+        self.cur_task = self.task_set[task_id]
+        #self.cur_position_discrete = numpy.array(self.cur_task.start, dtype = 'int8')
+        self.cur_position_discrete = numpy.array((randint(0,9), randint(0,9)), dtype = 'int8')
+
+        self.state = numpy.zeros(self.observation_space.shape,
+                                 dtype = 'uint8')
+        self.state[StateLayers.OBSTACLE] = self.cur_task.local_map
+        #self.state[(StateLayers.WALKED,) + self.cur_position_discrete] = 1
+        self.state[(StateLayers.GOAL,) + self.cur_task.finish] = 1
+
+        self.step_number = 0
+        self.cur_target_i = 0
+        logger.info('Environment %s has been reset' % self.__class__.__name__)
+        return self.state
+
+    def _render(self, mode = 'human', close = False):
+        return render_state(self.state, mode = mode, scale = self.monitor_scale)
+
+    def _configure(self,
+                   tasks_dir = 'data/samples/imported',
+                   map_shape = (501, 501),
+                   goal_error = 1,
+                   obstacle_punishment = OBSTACLE_PUNISHMENT,
+                   local_goal_reward = 5,
+                   monitor_scale = 2,
+                   stop_game_after_invalid_action = False,
+                   vision_range = 4):
+        self.observation_space = gym.spaces.Box(low = 0,
+                                                high = 1,
+                                                shape = (StateLayers.LAYERS_NUM,) + map_shape)
+        self.task_set = TaskSet(tasks_dir)
+        self.goal_error = goal_error
+        self.obstacle_punishment = obstacle_punishment
+        self.local_goal_reward = local_goal_reward
+        self.monitor_scale = monitor_scale
+        self.stop_game_after_invalid_action = stop_game_after_invalid_action
+        self.vision_range = vision_range
 
     def _seed(self, seed = None):
         self.np_random, seed1 = gym.utils.seeding.np_random(seed)
