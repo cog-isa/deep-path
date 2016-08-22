@@ -196,11 +196,12 @@ class PathFindingByPixelEnv(gym.Env):
         return [seed1]
 
 
-class ShouldBeNamedAndRewrittenLaterEnv(gym.Env):
+class PathFindingByHeightEnv(gym.Env):
     metadata = { 'render.modes': STATE_RENDERERS.keys() }
     action_space = gym.spaces.Discrete(len(BY_PIXEL_ACTIONS))
 
     def __init__(self):
+        self.cur_visible_map = None
         self.task_set = None
         self.cur_task = None
         self.observation_space = None
@@ -213,9 +214,41 @@ class ShouldBeNamedAndRewrittenLaterEnv(gym.Env):
         self.local_goal_reward = None
         self.monitor_scale = None
         self.stop_game_after_invalid_action = None
+        self.heights = None
 
-    def cut_seen(self, state, pos):
-        seen = numpy.ndarray(shape=(1, 2, 2*self.vision_range+1, 2*self.vision_range+1))
+    def set_heights(self, state):
+        labyrinth = state[StateLayers.OBSTACLE]
+        heights = numpy.ndarray(shape=labyrinth.shape, dtype='int8')
+        heights.fill(0)
+        processed = set()
+        to_process_next = {self.cur_task.finish}
+        current_height = 0
+        for i in range(labyrinth.shape[0]):
+            for j in range(labyrinth.shape[1]):
+                if labyrinth[i][j]:
+                    heights[i][j] = -1#labyrinth[i][j]
+                    processed.add((i,j))
+                else:
+                    heigth = 0
+        while len(to_process_next):
+            processing_now = to_process_next.copy()
+            to_process_next = set()
+            for pair in processing_now:
+                y, x = pair
+                heights[y][x] = current_height
+                processed.add((y, x))
+                for d in BY_PIXEL_ACTION_DIFFS.values():
+                    if 0 <= y+d[0] < labyrinth.shape[0] \
+                            and 0 <= x+d[1] < labyrinth.shape[1] \
+                            and (y+d[0],x+d[1]) not in processed \
+                            and (y+d[0],x+d[1]) not in processing_now:
+                        to_process_next.add((y+d[0], x+d[1]))
+            current_height += 1
+        return heights
+
+    def cut_seen(self, state):
+        pos = self.cur_position_discrete
+        seen = numpy.ndarray(shape=(1, 2*self.vision_range+1, 2*self.vision_range+1))
         walls, target, path = state
         center_y, center_x = pos
         height, width = len(walls), len(walls[0])
@@ -223,12 +256,11 @@ class ShouldBeNamedAndRewrittenLaterEnv(gym.Env):
             for dx in range(-self.vision_range, self.vision_range+1):
                 x, y = center_x+dx, center_y+dy
                 if x < 0 or x >= width or y < 0 or y >= height:
-                    seen[0][0][dx][dy] = 1
-                    seen[0][1][dx][dy] = 0
+                    seen[0][dx][dy] = -1
+                elif walls[y][x]:
+                    seen[0][dx][dy] = -1
                 else:
-                    seen[0][0][dx][dy] = walls[y][x]
-                    seen[0][1][dx][dy] = target[y][x]*10
-        #if max([max(i) for i in target]) == 0:
+                    seen[0][dx][dy] = target[y][x]*10
         return seen
 
     def _step(self, action):
@@ -254,6 +286,9 @@ class ShouldBeNamedAndRewrittenLaterEnv(gym.Env):
             else:
                 old_target_dist = euclidean(self.cur_position_discrete, self.cur_task.path[self.cur_target_i])
                 cur_target_dist = euclidean(new_position, self.cur_task.path[self.cur_target_i])
+                old_height = self.heights[self.cur_position_discrete[0],
+                                          self.cur_position_discrete[1]]
+                new_height = self.heights[new_position[0], new_position[1]]
                 if cur_target_dist < self.goal_error:
                     reward = self.local_goal_reward
                     if self.cur_target_i < len(self.cur_task.path) - 1:
@@ -261,33 +296,35 @@ class ShouldBeNamedAndRewrittenLaterEnv(gym.Env):
                     else:
                         done = True
                 else:
-                    reward = (old_target_dist - cur_target_dist)*0
-                    reward = 0.01
+                    reward = (old_height - new_height)
 
                 logger.debug('Cur target dist is %s' % cur_target_dist)
 
                 self.cur_position_discrete += BY_PIXEL_ACTION_DIFFS[action]
                 self.state[(StateLayers.WALKED,) + tuple(self.cur_position_discrete)] = 1
         logger.debug('Reward is %f' % reward)
-        return self.state, reward, done, None
+        self.cur_visible_map = self.cut_seen(self.state)
+        return self.cur_visible_map, reward, done, None
 
     def _reset(self):
         logger.info('Reset environment %s' % self.__class__.__name__)
         task_id = self.np_random.choice(self.task_set.keys())
         self.cur_task = self.task_set[task_id]
-        #self.cur_position_discrete = numpy.array(self.cur_task.start, dtype = 'int8')
-        self.cur_position_discrete = numpy.array((randint(0,9), randint(0,9)), dtype = 'int8')
+        self.cur_position_discrete = numpy.array(self.cur_task.start, dtype = 'int8')
+        #self.cur_position_discrete = numpy.array((randint(0,9), randint(0,9)), dtype = 'int8')
 
         self.state = numpy.zeros(self.observation_space.shape,
-                                 dtype = 'uint8')
+                                 dtype = 'int8')
         self.state[StateLayers.OBSTACLE] = self.cur_task.local_map
         #self.state[(StateLayers.WALKED,) + self.cur_position_discrete] = 1
         self.state[(StateLayers.GOAL,) + self.cur_task.finish] = 1
 
         self.step_number = 0
         self.cur_target_i = 0
+        self.cur_visible_map = self.cut_seen(self.state)
+        self.heights = self.set_heights(self.state)
         logger.info('Environment %s has been reset' % self.__class__.__name__)
-        return self.state
+        return self.cur_visible_map
 
     def _render(self, mode = 'human', close = False):
         return render_state(self.state, mode = mode, scale = self.monitor_scale)
