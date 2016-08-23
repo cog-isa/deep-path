@@ -41,7 +41,7 @@ def load_from_xml(fname, ctor = PathFindingTask):
         #if sections:
         #    path.append((int(sections[-1].get('finish.y')),
         #                 int(sections[-1].get('finish.x'))))
-        print path
+        #print path
         result = ctor(title,
                       local_map,
                       (start_y, start_x),
