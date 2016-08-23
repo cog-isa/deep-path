@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 plt.interactive(False)
-step = 50
+step = 10
 epochs = step
 
 f = open('losslog.txt', 'r')
@@ -46,9 +46,10 @@ for i in range(len(filtered_loss)/epochs):
 
 x = np.arange(step, step*(len(means))+1, step)
 print len(finished), len(walls), len(x)
+plt.plot(x, walls, color='r', lw=1)
 plt.plot(x, means, color='b', lw=2)
 plt.plot(x, finished, color='g', lw=2)
-plt.plot(x, walls, color='r', lw=2)
+
 
 
 #x = range(0, 5000, 1)

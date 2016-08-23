@@ -30,7 +30,7 @@ BY_PIXEL_ACTION_DIFFS = {
 }
 
 DONE_REWARD = 10
-OBSTACLE_PUNISHMENT = 0.1
+OBSTACLE_PUNISHMENT = 1
 
 class StateLayers:
     OBSTACLE = 0
@@ -264,16 +264,18 @@ class PathFindingByHeightEnv(gym.Env):
         return seen
 
     def _step(self, action):
+        shout = False
         new_position = self.cur_position_discrete + BY_PIXEL_ACTION_DIFFS[action]
         logger.debug('Actor decided to go %s from %s to %s' % (BY_PIXEL_ACTIONS[action],
                                                                tuple(self.cur_position_discrete),
                                                                tuple(new_position)))
-
+        wall = False
         done = all(new_position == self.cur_task.finish)
         if done:
             logger.debug('Finished!')
             reward = DONE_REWARD
-            print 'FINISHED'
+            if shout:
+                print 'FINISHED'
         else:
             goes_out_of_field = any(new_position < 0) or any(new_position + 1 > self.cur_task.local_map.shape)
             invalid_step = goes_out_of_field or self.state[(StateLayers.OBSTACLE,) + tuple(new_position)] > 0
@@ -282,7 +284,9 @@ class PathFindingByHeightEnv(gym.Env):
                 logger.debug('Obstacle or out!')
                 if self.stop_game_after_invalid_action:
                     done = True
-                print 'WALL'
+                if shout:
+                    print 'WALL'
+                wall = True
             else:
                 old_target_dist = euclidean(self.cur_position_discrete, self.cur_task.path[self.cur_target_i])
                 cur_target_dist = euclidean(new_position, self.cur_task.path[self.cur_target_i])
@@ -304,7 +308,7 @@ class PathFindingByHeightEnv(gym.Env):
                 self.state[(StateLayers.WALKED,) + tuple(self.cur_position_discrete)] = 1
         logger.debug('Reward is %f' % reward)
         self.cur_visible_map = self.cut_seen(self.state)
-        return self.cur_visible_map, reward, done, None
+        return self.cur_visible_map, reward, done, wall
 
     def _reset(self):
         logger.info('Reset environment %s' % self.__class__.__name__)

@@ -23,14 +23,21 @@ max_steps = 100
 for _ in xrange(episode_count):
     observation = env.reset()
     agent.new_episode()
+    walls = 0
     for __ in range(max_steps):
-        #action, values = agent.act(observation, env.cur_position_discrete, epsilon=0.05+0.95*0.999**(_))
         action, values = agent.act(observation, epsilon=0.05+0.95*0.999**(_))
         observation, reward, done, info = env.step(action)
-        #agent.observe(reward, action, env.cur_position_discrete)
+        if info:
+            walls += 1
         agent.observe(reward, action)
         if done:
             break
+    steps = __
+    if done:
+        print 'DONE: ', steps, 'moves.',
+    else:
+        print 'FAIL: ',
+    print 'Found', walls, 'walls'
     if _ % 100 == 99:
         print 'iteration:', _ + 1
         agent.plot_layers(to_save='iteration'+str(_+1))

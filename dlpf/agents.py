@@ -2,7 +2,7 @@ import random
 import numpy
 from scipy.spatial.distance import euclidean
 from keras.models import Model
-from keras.layers import Convolution2D, Dense, Flatten, Input, merge
+from keras.layers import Convolution2D, Dense, Flatten, Input, merge, Dropout
 from keras.optimizers import RMSprop, Adagrad, Nadam, Adadelta
 from keras import backend as K
 import matplotlib.pyplot as plt
@@ -227,7 +227,8 @@ class FlatAgent(object):
                     else:
                         plt.show()
 
-    def build_model(self):
+    def build_model(self, number_of_neurons=1, desc_name='adadelta', loss_fn='squared_hinge',
+                    dropout1=0, dropout2=0, activation='relu'):
         #S = Input(shape=self.state_size)
         S = Input(shape=(2*self.vision_range+1, 2*self.vision_range+1))
         #h = Convolution2D(16, 8, 8, subsample=(4, 4),
@@ -235,16 +236,27 @@ class FlatAgent(object):
         #h = Convolution2D(32, 4, 4, subsample=(2, 2),
         #    border_mode='same', activation='relu')(h)
         h = Flatten()(S)
-        h = Dense(8, activation='relu')(h)
+        h = Dropout(dropout1)(h)
+        h = Dense(number_of_neurons, activation=activation)(h)
+        h = Dropout(dropout2)(h)
         V = Dense(self.number_of_actions)(h)
         self.model = Model(S, V)
         try:
+            raise ValueError
             self.model.load_weights('{}.h5'.format(self.save_name))
             print "loading from {}.h5".format(self.save_name)
         except:
             print "Training a new model"
         'squared_hinge'
-        self.model.compile(Adadelta(), loss='mean_squared_error')
+        if desc_name == 'adadelta':
+            desc = Adadelta
+        elif desc_name == 'rmsprop':
+            desc = RMSprop
+        elif desc_name == 'adagrad':
+            desc = Adagrad
+        elif desc_name == 'nadam':
+            desc = Nadam
+        self.model.compile(desc(), loss=loss_fn)
 
     def new_episode(self):
         self.states.append([])
@@ -326,12 +338,12 @@ class FlatAgent(object):
         #print filled_reward
         #self.model.fit(input_layer, filled_reward, nb_epoch=1, verbose=0)
 
-    def train_with_full_experience(self):
-        batches = self.generate_batches(batch_size=100)
+    def train_with_full_experience(self, output=2, batch=100):
+        batches = self.generate_batches(batch_size=batch)
         self.model.fit_generator(batches,
                                  samples_per_epoch=len(self.states*10),
                                  nb_epoch=10,
-                                 verbose=2)
+                                 verbose=output)
 
 class RandomAgent(object):
     def __init__(self, action_space):
