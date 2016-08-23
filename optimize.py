@@ -27,7 +27,7 @@ def objective(space):
                       dropout1=space['dropout1'],
                       activation=space['activation'])
 
-    episode_count = 2000
+    episode_count = 5000
     max_steps = 100
 
     for _ in xrange(episode_count):
@@ -35,7 +35,7 @@ def objective(space):
         agent.new_episode()
         walls = 0
         for __ in range(max_steps):
-            action, values = agent.act(observation, epsilon=0.05+0.95*0.99**(_))
+            action, values = agent.act(observation, epsilon=0.05+0.95*0.999**(_))
             observation, reward, done, info = env.step(action)
             if info:
                 walls += 1
