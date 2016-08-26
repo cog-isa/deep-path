@@ -157,7 +157,7 @@ class PathFindingByPixelEnv(gym.Env):
         task_id = self.np_random.choice(self.task_set.keys())
         self.cur_task = self.task_set[task_id]
         #self.cur_position_discrete = numpy.array(self.cur_task.start, dtype = 'int8')
-        self.cur_position_discrete = numpy.array((randint(0,9), randint(0,9)), dtype = 'int8')
+        self.cur_position_discrete = numpy.array((randint(0,9), randint(0,9)), dtype = 'int32')
 
         self.state = numpy.zeros(self.observation_space.shape,
                                  dtype = 'uint8')
@@ -218,7 +218,7 @@ class PathFindingByHeightEnv(gym.Env):
 
     def set_heights(self, state):
         labyrinth = state[StateLayers.OBSTACLE]
-        heights = numpy.ndarray(shape=labyrinth.shape, dtype='int8')
+        heights = numpy.ndarray(shape=labyrinth.shape, dtype='int32')
         heights.fill(0)
         processed = set()
         to_process_next = {self.cur_task.finish}
@@ -314,11 +314,11 @@ class PathFindingByHeightEnv(gym.Env):
         logger.info('Reset environment %s' % self.__class__.__name__)
         task_id = self.np_random.choice(self.task_set.keys())
         self.cur_task = self.task_set[task_id]
-        self.cur_position_discrete = numpy.array(self.cur_task.start, dtype = 'int8')
+        self.cur_position_discrete = numpy.array(self.cur_task.start, dtype = 'int32')
         #self.cur_position_discrete = numpy.array((randint(0,9), randint(0,9)), dtype = 'int8')
 
         self.state = numpy.zeros(self.observation_space.shape,
-                                 dtype = 'int8')
+                                 dtype = 'uint32')
         self.state[StateLayers.OBSTACLE] = self.cur_task.local_map
         #self.state[(StateLayers.WALKED,) + self.cur_position_discrete] = 1
         self.state[(StateLayers.GOAL,) + self.cur_task.finish] = 1
@@ -331,7 +331,8 @@ class PathFindingByHeightEnv(gym.Env):
         return self.cur_visible_map
 
     def _render(self, mode = 'human', close = False):
-        return render_state(self.state, mode = mode, scale = self.monitor_scale)
+        pass
+        #return render_state(self.state, mode = mode, scale = self.monitor_scale)
 
     def _configure(self,
                    tasks_dir = 'data/samples/imported',

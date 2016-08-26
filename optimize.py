@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import pickle
 import time
 from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
@@ -14,7 +12,7 @@ logger = init_log(out_file = 'testbed.log', stderr = False)
 
 
 env = gym.make('PathFindingByPixel-v2')
-env.configure(tasks_dir = os.path.abspath('data/sample/imported/'), monitor_scale = 10, map_shape = (10, 10))
+env.configure(tasks_dir = os.path.abspath('data/sample/imported/'), monitor_scale = 10, map_shape = (501, 501))
 env.monitor.start('data/sample/results/basic_dqn', force=True, seed=0)
 
 
@@ -27,8 +25,7 @@ def objective(space):
                       desc_name=space['desc'],
                       loss_fn=space['lf'],
                       dropout1=space['dropout1'],
-                      activation=space['activation'],
-                      lr=space['lr'])
+                      activation=space['activation'])
 
     episode_count = 5000
     max_steps = 100
@@ -51,7 +48,7 @@ def objective(space):
             # print 'iteration:', _ + 1
             agent.plot_layers(to_save='iteration'+str(_+1))
         if _ % 10 == 9:
-            agent.train_with_full_experience(output=0, batch=space['batch'])
+            agent.train_with_full_experience(output=0, batch=space['batch_size'])
     print 'result: ', sum(stepslog[:10])
     return {'loss': sum(stepslog[:10]), 'status': STATUS_OK}
 
@@ -62,12 +59,11 @@ def objective(space):
 trials = Trials()
 best = fmin(objective,
             space={'neurons': hp.choice('neurons', [4, 8, 12, 16, 32]),
-                   'batch': hp.choice('batch', [4, 16, 32, 64, 126, 256, 512, 1024]),
+                   'batch': hp.choice('batch', [5, 10, 20, 50, 100, 500, 1000]),
                    'desc': hp.choice('desc', ['adadelta', 'rmsprop', 'adagrad', 'nadam']),
-                   'lf': hp.choice('lf', ['mean_squared_error', 'categorical_crossentropy']),
-                   'lr': hp.loguniform('lr', numpy.log(0.001), numpy.log(0.1)),
-                   'dropout1': hp.uniform('dropout1', 0, 1),
-                   'dropout2': hp.uniform('dropout2', 0, 1),
+                   'lf': hp.choice('lf', ['mean_squared_error', 'categorical_crossentropy', 'squared_hinge']),
+                   'dropout1': hp.choice('dropout1', [0, 0.25, 0.5, 0.75]),
+                   'dropout2': hp.choice('dropout2', [0, 0.25, 0.5, 0.75]),
                    'activation': hp.choice('activation', ['relu', 'linear', 'tanh', 'sigmoid'])},
             algo=tpe.suggest,
             max_evals=10,

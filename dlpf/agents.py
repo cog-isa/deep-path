@@ -228,7 +228,7 @@ class FlatAgent(object):
                         plt.show()
 
     def build_model(self, number_of_neurons=1, desc_name='adadelta', loss_fn='squared_hinge',
-                    dropout1=0, dropout2=0, activation='relu', lr=0.01):
+                    dropout1=0, dropout2=0, activation='relu'):
         #S = Input(shape=self.state_size)
         S = Input(shape=(2*self.vision_range+1, 2*self.vision_range+1))
         #h = Convolution2D(16, 8, 8, subsample=(4, 4),
@@ -248,9 +248,6 @@ class FlatAgent(object):
         except:
             print "Training a new model"
         'squared_hinge'
-        opt_args = {
-            'lr' : 0.01
-        }
         if desc_name == 'adadelta':
             desc = Adadelta
         elif desc_name == 'rmsprop':
@@ -259,7 +256,7 @@ class FlatAgent(object):
             desc = Adagrad
         elif desc_name == 'nadam':
             desc = Nadam
-        self.model.compile(desc(**opt_args), loss=loss_fn)
+        self.model.compile(desc(), loss=loss_fn)
 
     def new_episode(self):
         self.states.append([])

@@ -10,7 +10,7 @@ logger = init_log(out_file = 'testbed.log', stderr = False)
 
 
 env = gym.make('PathFindingByPixel-v2')
-env.configure(tasks_dir = os.path.abspath('data/sample/imported/'), monitor_scale = 10, map_shape = (10, 10))
+env.configure(tasks_dir = os.path.abspath('data/sample/imported/'), monitor_scale = 10)#, map_shape = (10, 10))
 env.monitor.start('data/sample/results/basic_dqn', force=True, seed=0)
 agent = FlatAgent(state_size = env.observation_space.shape,
                  number_of_actions = env.action_space.n,
@@ -18,7 +18,7 @@ agent = FlatAgent(state_size = env.observation_space.shape,
 agent.build_model()
 
 episode_count = 5000
-max_steps = 100
+max_steps = 500
 
 for _ in xrange(episode_count):
     observation = env.reset()

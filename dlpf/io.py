@@ -35,13 +35,14 @@ def load_from_xml(fname, ctor = PathFindingTask):
 
         sections = tree.xpath('/root/log[1]/hplevel/section')
         sections.sort(key = lambda n: int(n.get('number')))
-        path = [(int(s.get('finish.y')),
-                 int(s.get('finish.x')))
-                for s in sections]
+        #path = [(int(s.get('finish.y')),
+        #         int(s.get('finish.x')))
+        #        for s in sections]
+        path = [(finish_y, finish_x)]
         #if sections:
         #    path.append((int(sections[-1].get('finish.y')),
         #                 int(sections[-1].get('finish.x'))))
-        #print path
+        print path
         result = ctor(title,
                       local_map,
                       (start_y, start_x),
