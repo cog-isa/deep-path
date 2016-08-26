@@ -269,7 +269,7 @@ class FlatAgent(object):
         if self.i % self.save_freq == 0:
             self.model.save_weights('{}.h5'.format(self.save_name), True)
 
-    def generate_batches(self, batch_size, width_of_layers=9, height_of_layers=9):
+    def generate_batches(self, batch_size, width_of_layers=21, height_of_layers=21):
         input_batch = numpy.zeros((batch_size, width_of_layers, height_of_layers),
                                   dtype = 'float32')
         output_batch = numpy.zeros((batch_size, self.number_of_actions),
