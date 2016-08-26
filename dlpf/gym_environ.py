@@ -342,7 +342,7 @@ class PathFindingByHeightEnv(gym.Env):
                    local_goal_reward = 5,
                    monitor_scale = 2,
                    stop_game_after_invalid_action = False,
-                   vision_range = 4):
+                   vision_range = 10):
         self.observation_space = gym.spaces.Box(low = 0,
                                                 high = 1,
                                                 shape = (StateLayers.LAYERS_NUM,) + map_shape)
