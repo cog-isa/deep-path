@@ -189,7 +189,7 @@ class DqnAgent(object):
 
 class FlatAgent(object):
     def __init__(self, state_size=None, number_of_actions=1,
-                 epsilon=0.1, mbsz=32, discount=0.9, memory=250,
+                 epsilon=0.1, mbsz=32, discount=0.9, memory=100,
                  save_name='basic', save_freq=10):
         self.state_size = state_size
         self.number_of_actions = number_of_actions
@@ -204,7 +204,7 @@ class FlatAgent(object):
         self.experience = []
         self.i = 1
         self.save_freq = save_freq
-        self.vision_range = 4
+        self.vision_range = 10
 
     def plot_layers(self, to_save=''):
         wts = self.model.get_weights()
@@ -227,7 +227,7 @@ class FlatAgent(object):
                     else:
                         plt.show()
 
-    def build_model(self, number_of_neurons=1, desc_name='adadelta', loss_fn='squared_hinge',
+    def build_model(self, number_of_neurons=100, desc_name='adadelta', loss_fn='squared_hinge',
                     dropout1=0, dropout2=0, activation='relu'):
         #S = Input(shape=self.state_size)
         S = Input(shape=(2*self.vision_range+1, 2*self.vision_range+1))
