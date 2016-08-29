@@ -114,3 +114,32 @@ class TaskSet(object):
                                task.start,
                                task.finish,
                                task.path)
+
+
+class UltimateTaskSet(object):
+    def __init__(self, in_dir, maps_subdir = 'maps', paths_subdir = 'paths'):
+        self.in_dir = in_dir
+        self.map_dir = os.path.join(self.in_dir, maps_subdir)
+        self.paths_dir = os.path.join(self.in_dir, paths_subdir)
+        self.task_names = [os.path.splitext(fn)[0] for fn in os.listdir(self.paths_dir)]
+        self.maps_cache = {}
+
+    def keys(self):
+        return self.task_names
+
+    def __getitem__(self, index):
+        task_name, start, finish = index
+
+        task = load_obj(os.path.join(self.paths_dir, task_name + COMPACT_TASK_EXT))
+
+        local_map = self.maps_cache.get(task.map_id)
+        if local_map is None:
+            with numpy.load(os.path.join(self.map_dir, task.map_id + COMPACT_MAP_EXT)) as f:
+                local_map = f['arr_0']
+                self.maps_cache[task.map_id] = local_map
+
+        return PathFindingTask(task_name,
+                               local_map,
+                               start,
+                               finish,
+                               task.path)
