@@ -3,13 +3,14 @@ import gym
 from dlpf.agents import DqnAgent, RandomAgent, FlatAgent, FlatAgentWithLossLogging
 import keras
 from dlpf.io import *
+from data_shuffle import *
 
 logger = init_log(out_file = 'import.log', stderr = False)
-to_import = False
+to_import = True
 if to_import:
-    import_tasks_from_xml_to_compact('data/sample/raw/test/', 'data/sample/imported/test/')
-    import_tasks_from_xml_to_compact('data/sample/raw/train/', 'data/sample/imported/train/')
-    import_tasks_from_xml_to_compact('data/sample/raw/validate/', 'data/sample/imported/validate/')
+    import_tasks_from_xml_to_compact('data/sample/raw/', 'data/sample/imported/')
+    shuffle_imported_paths(to_split=True)
+    shuffle_imported_maps(to_split=True)
 
 logger = init_log(out_file = 'testbed.log', stderr = False)
 
@@ -39,6 +40,7 @@ for _ in xrange(episode_count):
         if done:
             break
     steps = __
+    print 'GAME #', _+1
     if done:
         print 'DONE: ', steps, 'moves.',
     else:
