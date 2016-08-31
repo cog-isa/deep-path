@@ -4,9 +4,14 @@ from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 import gym
 from dlpf.agents import DqnAgent, RandomAgent, FlatAgent, FlatAgentWithLossLogging
 from dlpf.io import *
+from data_shuffle import *
 
 logger = init_log(out_file = 'import.log', stderr = False)
-import_tasks_from_xml_to_compact('data/sample/raw/', 'data/sample/imported/')
+to_import = True
+if to_import:
+    import_tasks_from_xml_to_compact('data/sample/raw/', 'data/sample/imported/')
+    shuffle_imported_paths(to_split=True, val=False)
+    shuffle_imported_maps(to_split=True, val=False)
 
 logger = init_log(out_file = 'testbed.log', stderr = False)
 
@@ -27,7 +32,7 @@ def to_continue(agent, critical_enlargement):
 
 
 def objective(space):
-    stepslog = []
+    reslog = []
     agent = FlatAgentWithLossLogging(state_size = env.observation_space.shape,
                      number_of_actions = env.action_space.n,
                      save_name = env.__class__.__name__)
@@ -37,27 +42,50 @@ def objective(space):
                       dropout1=space['dropout1'],
                       activation=space['activation'])
 
-    episode_count = 10000
+    episode_count = space['episodes']
     max_steps = 500
 
-    for game_i in xrange(episode_count):
+    for _ in xrange(episode_count):
+        env.mode = 'train'
         observation = env.reset()
         agent.new_episode()
         walls = 0
-        for step_i in range(max_steps):
-            action, values = agent.act(observation, epsilon=0.05+0.95*0.999**(game_i))
+        for __ in range(max_steps):
+            action, values = agent.act(observation, epsilon=0.05+0.95*0.999**(_))
             observation, reward, done, info = env.step(action)
             if info:
                 walls += 1
             agent.observe(reward, action)
             if done:
                 break
-        steps = step_i
-        stepslog.append(steps+walls)
+        steps = __
+        #if _ % 100 == 99:
+        #    print 'iteration:', _ + 1
+        #    agent.plot_layers(to_save='iteration'+str(_+1))
         if _ % 10 == 9:
-            agent.train_with_full_experience(output=0, batch=space['batch_size'])
-    print 'result: ', sum(stepslog[:10])
-    return {'loss': sum(stepslog[:10]), 'status': STATUS_OK}
+            agent.train_with_full_experience()
+
+    for _ in xrange(episode_count):
+        env.mode = 'test'
+        observation = env.reset()
+        agent.new_episode()
+        walls = 0
+        for __ in range(max_steps):
+            action, values = agent.act(observation, epsilon=0)
+            observation, reward, done, info = env.step(action)
+            if info:
+                walls += 1
+            agent.observe(reward, action)
+            if done:
+                break
+        steps = __
+    if env.heights[env.cur_task.start[0]][env.cur_task.start[1]] > 0:
+        reslog.append(steps+walls/env.heights[env.cur_task.start[0]][env.cur_task.start[1]])
+    else:
+        reslog.append(3)
+        print 'something weird happened'
+    print 'result: ', sum(reslog)/len(reslog)
+    return {'loss': sum(reslog)/len(reslog), 'status': STATUS_OK}
 
 
 
@@ -71,7 +99,8 @@ best = fmin(objective,
                    'lf': hp.choice('lf', ['mean_squared_error', 'categorical_crossentropy', 'squared_hinge']),
                    'dropout1': hp.choice('dropout1', [0, 0.25, 0.5, 0.75]),
                    'dropout2': hp.choice('dropout2', [0, 0.25, 0.5, 0.75]),
-                   'activation': hp.choice('activation', ['relu', 'linear', 'tanh', 'sigmoid'])},
+                   'activation': hp.choice('activation', ['relu', 'linear', 'tanh', 'sigmoid']),
+                   'episodes': hp.choice('episodes', [10000, 25000, 50000, 100000])},
             algo=tpe.suggest,
             max_evals=10,
             trials=trials)
