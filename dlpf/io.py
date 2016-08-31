@@ -138,6 +138,8 @@ class UltimateTaskSet(object):
                 local_map = f['arr_0']
                 self.maps_cache[task.map_id] = local_map
 
+
+
         return PathFindingTask(task_name,
                                local_map,
                                start,

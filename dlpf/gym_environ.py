@@ -81,6 +81,37 @@ def render_rgb(state, scale = 2):
                         axis = 0)
 
 
+def is_task_ok(task):
+    if task.local_map[task.start[0], task.start[1]] == 1 \
+            or task.local_map[task.finish[0], task.finish[1]] == 1 \
+            or task.start == task.finish:
+        return False
+    else:
+        walls = set()
+        visited = set()
+        to_visit_next = set([task.start])
+        for y in range(len(task.local_map)):
+            for x in range(len(task.local_map[y])):
+                if task.local_map[y][x]==1:
+                    walls.add((y, x))
+        while len(to_visit_next) > 0 and task.finish not in visited:
+            processing = to_visit_next.copy()
+            to_visit_next = set()
+            for point in processing:
+                for d in BY_PIXEL_ACTION_DIFFS.values():
+                    if 0 <= point[0]+d[0] < len(task.local_map) \
+                            and 0 <= point[1]+d[1] < len(task.local_map[0]) \
+                            and (point[0]+d[0], point[1]+d[1]) not in visited \
+                            and (point[0]+d[0], point[1]+d[1]) not in walls \
+                            and (point[0]+d[0], point[1]+d[1]) not in processing:
+                        to_visit_next.add((point[0]+d[0], point[1]+d[1]))
+                visited.add(point)
+        if task.finish in visited:
+            return True
+        else:
+            return False
+
+
 STATE_RENDERERS = {
     'ansi': render_ansi,
     'rgb_array': render_rgb
@@ -429,6 +460,9 @@ class PathFindingByHeightWithControlEnv(gym.Env):
                             and (y+d[0],x+d[1]) not in processing_now:
                         to_process_next.add((y+d[0], x+d[1]))
             current_height += 1
+            if max([max(i) for i in heights]) == len(to_process_next) == 0:
+                print 'Unreachable'
+
         return heights
 
     def cut_seen(self, state):
@@ -537,11 +571,9 @@ class PathFindingByHeightWithControlEnv(gym.Env):
             task_set = self.validate_task_set
         task_name = self.np_random.choice(task_set.keys())
         task_start = (randint(0, 500), randint(0, 500))
-        while task_set[(task_name, task_start, (0, 0))].local_map[task_start[0], task_start[1]]:
-            task_start = (randint(0, 500), randint(0, 500))
         task_finish = (randint(0, 500), randint(0, 500))
-        while task_set[(task_name, task_start, task_finish)].local_map[task_start[0], task_start[1]] \
-                or task_start == task_finish:
+        while not is_task_ok(task_set[(task_name, task_start, task_finish)]):
+            task_start = (randint(0, 500), randint(0, 500))
             task_finish = (randint(0, 500), randint(0, 500))
         return task_set[(task_name, task_start, task_finish)]
 

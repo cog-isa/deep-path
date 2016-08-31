@@ -6,11 +6,11 @@ from dlpf.io import *
 from data_shuffle import *
 
 logger = init_log(out_file = 'import.log', stderr = False)
-to_import = True
+to_import = False
 if to_import:
     import_tasks_from_xml_to_compact('data/sample/raw/', 'data/sample/imported/')
-    shuffle_imported_paths(to_split=True, val=False)
-    shuffle_imported_maps(to_split=True, val=False)
+shuffle_imported_paths(to_split=True, val=False)
+shuffle_imported_maps(to_split=True, val=False)
 
 logger = init_log(out_file = 'testbed.log', stderr = False)
 
@@ -23,8 +23,8 @@ agent = FlatAgentWithLossLogging(state_size = env.observation_space.shape,
                  save_name = env.__class__.__name__)
 agent.build_model()
 
-episode_count = 5000
-max_steps = 500
+episode_count = 10
+max_steps = 100
 
 for _ in xrange(episode_count):
     env.mode = 'train'
@@ -54,7 +54,7 @@ for _ in xrange(episode_count):
 
 print 'NN finished learning. Starting test'
 
-for _ in xrange(episode_count):
+for _ in xrange(episode_count*10):
     env.mode = 'test'
     observation = env.reset()
     agent.new_episode()
@@ -73,4 +73,11 @@ for _ in xrange(episode_count):
     else:
         print 'FAIL: ',
     print 'Found', walls, 'walls'
-    print 'SCORE:', steps+walls, '(PERFECT:', env.heights[env.cur_task.start[0]][env.cur_task.start[1]], ')'
+    score = steps+walls
+    perfect = env.heights[env.cur_task.start[0]][env.cur_task.start[1]]
+
+    print 'SCORE:', score, '(PERFECT:', perfect, ')'
+    if perfect == 0:
+        print env.cur_task.title
+    #    for i in env.heights:
+    #        print ''.join([str(abs(j)) for j in i])
