@@ -547,8 +547,13 @@ class PathFindingByHeightWithControlEnv(gym.Env):
 
     def _reset(self):
         logger.info('Reset environment %s' % self.__class__.__name__)
-
-        self.cur_task = self.generate_new_task(self.mode)
+        generated = False
+        while not generated:
+            try:
+                self.cur_task = self.generate_new_task(self.mode)
+                generated = True
+            except IOError:
+                pass
 
         self.cur_position_discrete = numpy.array(self.cur_task.start, dtype = 'int32')
         self.state = numpy.zeros(self.observation_space.shape,

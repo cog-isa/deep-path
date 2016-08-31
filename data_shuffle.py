@@ -27,37 +27,38 @@ def join_data(path, dest, use_validation=True):
         os.rename(os.path.join(dest['train'], f), os.path.join(path, f))
 
 
-def shuffle_raw(to_join=False, to_split=False):
+def shuffle_raw(to_join=False, to_split=False, val=True):
     path = 'data/sample/raw/'
     dest = {'test': path+'test/',
             'train': path+'train/',
             'validate': path+'validate/'}
     if to_join:
-        join_data(path, dest)
+        join_data(path, dest, use_validation=val)
     if to_split:
-        split_data(path, dest)
+        split_data(path, dest, use_validation=val)
 
 
-def shuffle_imported_maps(to_join=False, to_split=False):
+def shuffle_imported_maps(to_join=False, to_split=False, val=True):
     path = 'data/sample/imported/maps/'
     dest = {'test': 'data/sample/imported/test/maps/',
             'train': 'data/sample/imported/train/maps/',
             'validate': 'data/sample/imported/validate/maps/'}
     if to_join:
-        join_data(path, dest)
+        join_data(path, dest, use_validation=val)
     if to_split:
-        split_data(path, dest)
+        split_data(path, dest, use_validation=val)
 
 
-def shuffle_imported_paths(to_join=False, to_split=False):
+def shuffle_imported_paths(to_join=False, to_split=False, val=True):
     path = 'data/sample/imported/paths/'
     dest = {'test': 'data/sample/imported/test/paths/',
             'train': 'data/sample/imported/train/paths/',
             'validate': 'data/sample/imported/validate/paths/'}
     if to_join:
-        join_data(path, dest)
+        join_data(path, dest, use_validation=val)
     if to_split:
-        split_data(path, dest)
+        split_data(path, dest, use_validation=val)
 
 
-shuffle_imported_paths(to_join=True)
+shuffle_imported_paths(to_join=True, val=False)
+shuffle_imported_maps(to_join=True, val=False)

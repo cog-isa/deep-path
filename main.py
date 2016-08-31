@@ -6,11 +6,11 @@ from dlpf.io import *
 from data_shuffle import *
 
 logger = init_log(out_file = 'import.log', stderr = False)
-to_import = True
+to_import = False
 if to_import:
     import_tasks_from_xml_to_compact('data/sample/raw/', 'data/sample/imported/')
-    shuffle_imported_paths(to_split=True)
-    shuffle_imported_maps(to_split=True)
+    shuffle_imported_paths(to_split=True, val=False)
+    shuffle_imported_maps(to_split=True, val=False)
 
 logger = init_log(out_file = 'testbed.log', stderr = False)
 
