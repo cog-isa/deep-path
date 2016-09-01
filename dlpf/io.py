@@ -35,14 +35,12 @@ def load_from_xml(fname, ctor = PathFindingTask):
 
         sections = tree.xpath('/root/log[1]/hplevel/section')
         sections.sort(key = lambda n: int(n.get('number')))
-        #path = [(int(s.get('finish.y')),
-        #         int(s.get('finish.x')))
-        #        for s in sections]
-        path = [(finish_y, finish_x)]
-        #if sections:
-        #    path.append((int(sections[-1].get('finish.y')),
-        #                 int(sections[-1].get('finish.x'))))
-        print path
+        path = [(int(s.get('start.y')),
+                 int(s.get('start.x')))
+                for s in sections]
+        if path:
+            path.append((int(sections[-1].get('finish.y')),
+                         int(sections[-1].get('finish.x'))))
         result = ctor(title,
                       local_map,
                       (start_y, start_x),
@@ -55,10 +53,14 @@ def load_from_xml(fname, ctor = PathFindingTask):
         return None
 
 
+def get_localmap_hash(local_map):
+    return hashlib.md5(local_map.tostring()).hexdigest()
+    
+
 def save_to_compact(task, maps_dir, paths_dir):
     try:
         logger.info('Saving %s to compact' % task.title)
-        map_id = hashlib.md5(task.local_map.tostring()).hexdigest()
+        map_id = get_localmap_hash(task.local_map)
         map_fname = os.path.join(maps_dir, map_id)
         if not os.path.exists(map_fname + '.npz'):
             logger.info('Saving map to %s' % map_fname)
@@ -116,32 +118,12 @@ class TaskSet(object):
                                task.path)
 
 
-class UltimateTaskSet(object):
-    def __init__(self, in_dir, maps_subdir = 'maps', paths_subdir = 'paths'):
-        self.in_dir = in_dir
-        self.map_dir = os.path.join(self.in_dir, maps_subdir)
-        self.paths_dir = os.path.join(self.in_dir, paths_subdir)
-        self.task_names = [os.path.splitext(fn)[0] for fn in os.listdir(self.paths_dir)]
-        self.maps_cache = {}
-
-    def keys(self):
-        return self.task_names
-
+class UltimateTaskSet(TaskSet):
     def __getitem__(self, index):
         task_name, start, finish = index
-
-        task = load_obj(os.path.join(self.paths_dir, task_name + COMPACT_TASK_EXT))
-
-        local_map = self.maps_cache.get(task.map_id)
-        if local_map is None:
-            with numpy.load(os.path.join(self.map_dir, task.map_id + COMPACT_MAP_EXT)) as f:
-                local_map = f['arr_0']
-                self.maps_cache[task.map_id] = local_map
-
-
-
+        base_result = super(UltimateTaskSet, self).__getitem__(task_name)
         return PathFindingTask(task_name,
-                               local_map,
+                               base_result.local_map,
                                start,
                                finish,
-                               task.path)
+                               base_result.path)

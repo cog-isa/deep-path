@@ -9,20 +9,6 @@ from keras import backend as K
 import matplotlib.pyplot as plt
 
 
-class LossHistory(keras.callbacks.Callback):
-    def on_train_begin(self, logs={}):
-        self.losses = []
-        self.val_losses = []
-
-    def on_batch_end(self, batch, logs={}):
-        self.losses.append(logs.get('loss'))
-
-    def on_epoch_end(self, epoch, logs={}):
-        self.losses.append(logs.get('val_loss'))
-
-    def get_flat_arrays(self):
-        return [float(i) for i in self.losses], [float(i) for i in self.val_losses]
-
 
 class DqnAgent(object):
     def __init__(self, state_size=None, number_of_actions=1,

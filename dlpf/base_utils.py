@@ -105,7 +105,37 @@ def set_theano_compiledir(dirname):
             os.environ['THEANO_FLAGS'] = 'base_compiledir=' + dirname
 
 
+_THEANO_DEVICES_TO_TRY = ['gpu1', 'gpu0']
+_GET_DEVICE = re.compile('device=([^,]+)')
+def try_assign_theano_on_free_gpu():
+    match = _GET_DEVICE.search(os.environ['THEANO_FLAGS'])
+    if match and match.group(1) == 'cpu':
+        return
+
+    import theano.sandbox.cuda
+    for dev in _THEANO_DEVICES_TO_TRY:
+        try:
+            theano.sandbox.cuda.use(dev)
+            return
+        except:
+            print traceback.format_exc()
+            pass
+    raise RuntimeError('no GPUs available')
+
+
 def copy_and_update(d, **updates):
     d = dict(d)
     d.update(updates)
     return d
+
+
+def copy_except(src, fields_to_skip):
+    return { k : v for for k, v in src.viewitems() if not k in fields_to_skip}
+
+
+def add_filename_suffix(fname, suffix):
+    base_name, ext = os.path.splitext(fname)
+    return base_name + suffix + ext
+
+def floor_to_number(what, how):
+    return int((float(what) / how) * how)
