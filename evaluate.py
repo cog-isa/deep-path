@@ -24,7 +24,7 @@ if __name__ == '__main__':
     aparser.add_argument('--output', type = str, help = 'Where to store results')
     aparser.add_argument('--level', type = str,
                          choices = LOGGING_LEVELS.keys(),
-                         default = 'debug',
+                         default = 'info',
                          help = 'Logging verbosity')
 
     args = aparser.parse_args()
@@ -37,13 +37,13 @@ if __name__ == '__main__':
                                             args.agent,
                                             args.folds,
                                             args.apply)
+
+    ensure_dir_exists(args.output)
     for stat_title, stat in zip(STATS_TITLES, all_stats):
         basic_plot_from_df(stat.episodes,
                            out_file = os.path.join(args.output, '%s_episodes.png' % stat_title))
         basic_plot_from_df(stat.full,
-                           out_file = os.path.join(args.output, '%s_full.png' % stat_title))
-        
-    ensure_dir_exists(args.output)
+                           out_file = os.path.join(args.output, '%s_full.png' % stat_title))    
     create_scores_file(os.path.join(args.output, 'scores.json'),
                        train_score = all_stats[0].score,
                        test_score = all_stats[1].score)

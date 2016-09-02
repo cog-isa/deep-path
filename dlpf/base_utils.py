@@ -16,7 +16,7 @@ LOGGING_LEVELS = {
     'critical' : logging.CRITICAL
 }
 
-def init_log(out_file = None, stderr = False, level = logging.DEBUG):
+def init_log(out_file = None, stderr = False, level = logging.DEBUG, stderr_level = logging.DEBUG, file_level = logging.DEBUG):
     all_loggers = [logging.getLogger()]
 
     log_formatter = logging.Formatter('%(asctime)-15s %(levelname)10s %(message)s')
@@ -24,14 +24,14 @@ def init_log(out_file = None, stderr = False, level = logging.DEBUG):
     if stderr:
         stderr_handler = logging.StreamHandler(sys.stderr)
         stderr_handler.setFormatter(log_formatter)
-        stderr_handler.setLevel(logging.INFO)
+        stderr_handler.setLevel(stderr_level)
 
     if out_file:
         if os.path.exists(out_file):
             os.remove(out_file)
         file_handler = logging.FileHandler(out_file)
         file_handler.setFormatter(log_formatter)
-        file_handler.setLevel(logging.DEBUG)
+        file_handler.setLevel(file_level)
 
     for logger in all_loggers:
         logger.handlers = []

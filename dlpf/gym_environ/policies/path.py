@@ -1,5 +1,5 @@
 import random
-from ..utils import build_distance_map
+from ..utils import check_finish_achievable
 
 
 class BasePathPolicy(object):
@@ -51,15 +51,16 @@ class RandomStartAndFinishMixin(object):
         self.rand = rand or random.Random()
 
     def reset(self, task):
-        super(RandomStartAndFinish, self).reset(task)
-        local_map = self.task.local_map # shortcut
-        while True:
-            self.start = self._gen_point()
-            self.finish = self._gen_point()
-            if local_map[self.start] == 0 \
-                and local_map[self.finish] == 0 \
-                and check_finish_achievable(local_map, self.start, self.finish):
-                break
+        super(RandomStartAndFinishMixin, self).reset(task)
+        if not self.task is None:
+            local_map = self.task.local_map # shortcut
+            while True:
+                self.start = self._gen_point()
+                self.finish = self._gen_point()
+                if local_map[self.start] == 0 \
+                    and local_map[self.finish] == 0 \
+                    and check_finish_achievable(local_map, self.start, self.finish):
+                    break
         
     def get_start_position(self):
         return self.start
