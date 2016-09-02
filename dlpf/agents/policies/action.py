@@ -19,7 +19,7 @@ class EpsilonGreedyPolicy(BaseActionPolicy):
 
     def choose_action(self, action_probabilities):
         if self.rand.random() < self.eps:
-            return self.rand.randint(len(action_probabilities))
+            return self.rand.randint(0, len(action_probabilities))
         else:
             return action_probabilities.argmax()
 
@@ -46,6 +46,6 @@ DEFAULT_ACTION_POLICY = 'epsilon_greedy'
 def get_available_action_policies():
     return list(_ACTION_POLICIES.keys())
 
-def get_action_policy(name = DEFAULT_ACTION_POLICY, *args, **kwargs):
-    assert name in _ACTION_POLICIES, 'Unknown action policy %s' % name
-    return _ACTION_POLICIES[name](*args, **kwargs)
+def get_action_policy(ctor = DEFAULT_ACTION_POLICY, *args, **kwargs):
+    assert ctor in _ACTION_POLICIES, 'Unknown action policy %s' % ctor
+    return _ACTION_POLICIES[ctor](*args, **kwargs)

@@ -92,10 +92,9 @@ def import_tasks_from_xml_to_compact(in_dir, out_dir, maps_subdir = 'maps', path
 
 
 class TaskSet(object):
-    def __init__(self, in_dir, maps_subdir = 'maps', paths_subdir = 'paths'):
-        self.in_dir = in_dir
-        self.map_dir = os.path.join(self.in_dir, maps_subdir)
-        self.paths_dir = os.path.join(self.in_dir, paths_subdir)
+    def __init__(self, paths_dir, maps_dir):
+        self.paths_dir = paths_dir
+        self.map_dir = maps_dir
         self.task_names = [os.path.splitext(fn)[0] for fn in os.listdir(self.paths_dir)]
         self.maps_cache = {}
 

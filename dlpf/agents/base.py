@@ -5,8 +5,9 @@ import keras
 from keras.models import Model
 from keras.layers import Dense, Input
 
+from dlpf.base_utils import load_object_from_dict
 from dlpf.keras_utils import get_optimizer, choose_samples_per_epoch
-from .policies import get_action_policy
+from .policies import get_action_policy, BaseActionPolicy
 
 
 def replay_train_data_generator(episodes, batch_size, actions_number, rand = random.Random()):
@@ -70,7 +71,9 @@ class BaseKerasAgent(object):
                  split_rand = random.Random()):
         self.input_shape = input_shape
         self.number_of_actions = number_of_actions
-        self.action_policy = action_policy
+        self.action_policy = get_action_policy(action_policy) \
+            if isinstance(action_policy, (str, unicode)) \
+            else get_action_policy(**action_policy)
         self.max_memory_size = max_memory_size
         self.loss = loss
         self.optimizer = optimizer
@@ -84,25 +87,27 @@ class BaseKerasAgent(object):
         self.split_rand = split_rand
 
         self.memory = []
+        
+        self._build_model()
 
     ##############################################################
     ###################### Basic agent logic #####################
     ##############################################################
-    def build_model(self):
+    def _build_model(self):
         input_layer = Input(shape = self.input_shape)
         inner_model = self._build_inner_model(input_layer)
-        V = Dense(self.number_of_actions)(inner_model)
-        self.model = Model(S, V)
+        output_layer = Dense(self.number_of_actions)(inner_model)
+        self.model = Model(input_layer, output_layer)
         self.model.compile(self.optimizer,
                            loss = self.loss,
                            metrics = self.model_metrics)
 
     def new_episode(self):
         self.memory.append([])
-        self.memory = self.memory[-self.memory_size:]
+        self.memory = self.memory[-self.max_memory_size:]
 
-    def act(self, observation, reward = None, done = 0):
-        action_probabilities = self.model.predict(observation)
+    def act(self, observation, reward = None, done = None):
+        action_probabilities = self.model.predict(observation.reshape((1,) + observation.shape))
         action = self.action_policy.choose_action(action_probabilities)
 
         if not reward is None: # that means that we can learn

@@ -1,5 +1,5 @@
 import random
-from .utils import build_distance_map
+from ..utils import build_distance_map
 
 
 class BasePathPolicy(object):

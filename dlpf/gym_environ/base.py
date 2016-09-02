@@ -1,16 +1,29 @@
-from dlpf.io import *
+import logging
 from scipy.spatial.distance import euclidean
-from random import randint
 import gym, gym.spaces, gym.utils
+
+from dlpf.io import TaskSet
+from dlpf.base_utils import load_object_by_name, load_yaml, copy_and_update
 from .policies import get_path_policy, get_task_policy, \
     DEFAULT_PATH_POLICY, DEFAULT_TASK_POLICY
-
+from .utils import BY_PIXEL_ACTIONS, BY_PIXEL_ACTION_DIFFS
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_DONE_REWARD = 10
 DEFAULT_GOAL_REWARD = 5
 DEFAULT_OBSTACLE_PUNISHMENT = 1
+
+
+class InfoValues:
+    OK = 'OK'
+    DONE = 'DONE'
+
+    OBSTACLE = 'OBS'
+    OUT_OF_FIELD = 'OOF'
+    
+    GOOD = frozenset({ OBSTACLE, OUT_OF_FIELD })
+    BAD = frozenset({ OK, DONE })
 
 
 class BasePathFindingByPixelEnv(gym.Env):
@@ -29,6 +42,9 @@ class BasePathFindingByPixelEnv(gym.Env):
         self.done_reward = None
         self.stop_game_after_invalid_action = None
 
+    def current_optimal_score(self):
+        return self._current_optimal_score()
+
     ####################################################
     ######## Default environment implementation ########
     ####################################################
@@ -38,14 +54,17 @@ class BasePathFindingByPixelEnv(gym.Env):
                                                                tuple(self.cur_position_discrete),
                                                                tuple(new_position)))
         
+        info = InfoValues.OK
         done = all(new_position == self.cur_task.finish)
         if done:
             logger.debug('Finished!')
             reward = self._get_done_reward()
+            info = InfoValues.DONE
         else:
             goes_out_of_field = self._check_out_of_field(new_position)
-            invalid_step = goes_out_of_field && self._goes_to_obstacle(new_position)
+            invalid_step = goes_out_of_field or self._goes_to_obstacle(new_position)
             if invalid_step:
+                info = InfoValues.OUT_OF_FIELD if goes_out_of_field else InfoValues.OBSTACLE
                 reward = self._get_obstacle_punishment()
                 logger.debug('Obstacle or out!')
                 if self.stop_game_after_invalid_action:
@@ -61,10 +80,10 @@ class BasePathFindingByPixelEnv(gym.Env):
 
                 logger.debug('Cur target dist is %s' % cur_target_dist)
 
-                self.cur_position_discrete += BY_PIXEL_ACTION_DIFFS[action]
+                self.cur_position_discrete = self._update_cur_position(action)
 
         logger.debug('Reward is %f' % reward)
-        return self._get_state(), reward, done, None
+        return self._get_state(), reward, done, info
 
     def _reset(self):
         logger.info('Reset environment %s' % self.__class__.__name__)
@@ -78,7 +97,8 @@ class BasePathFindingByPixelEnv(gym.Env):
         return self._init_state()
 
     def _configure(self,
-                   tasks_dir = 'data/samples/imported',
+                   tasks_dir = 'data/samples/imported/tasks',
+                   maps_dir = 'data/samples/imported/maps',
                    map_shape = (501, 501),
                    goal_error = 1,
                    path_policy = DEFAULT_PATH_POLICY,
@@ -88,10 +108,9 @@ class BasePathFindingByPixelEnv(gym.Env):
                    done_reward = DEFAULT_DONE_REWARD,
                    stop_game_after_invalid_action = False):
         self.observation_space = self._get_observation_space(map_shape)
-
-        self.task_set = TaskSet(tasks_dir)
+        self.task_set = TaskSet(tasks_dir, maps_dir)
         self.task_policy = get_task_policy(task_policy)
-        self.task_policy.reset(task_set)
+        self.task_policy.reset(self.task_set)
         self.path_policy = get_path_policy(path_policy)
 
         self.goal_error = goal_error
@@ -122,6 +141,9 @@ class BasePathFindingByPixelEnv(gym.Env):
     def _get_done_reward(self):
         return self.done_reward
 
+    def _update_cur_position(self, action):
+        return self.cur_position_discrete + BY_PIXEL_ACTION_DIFFS[action]
+
     def _render(self, mode = 'human', close = False):
         pass
 
@@ -139,3 +161,15 @@ class BasePathFindingByPixelEnv(gym.Env):
 
     def _get_observation_space(self, map_shape):
         raise NotImplemented()
+    
+    def _current_optimal_score(self):
+        raise NotImplemented()
+
+
+def load_environment_from_yaml(fname, **kwargs_override):
+    info = load_yaml(fname)
+    result = gym.make(info['ctor'])
+    result.configure(*info.get('args', []),
+                     **copy_and_update(info.get('kwargs', {}),
+                                       **kwargs_override))
+    return result

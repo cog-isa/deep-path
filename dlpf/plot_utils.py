@@ -13,7 +13,11 @@ def basic_plot(title_data_tuples, out_file = None):
     return fig, ax
 
 
-def basic_plot_df(raw_data, out_file = None):
-    df = pandas.DataFrame(raw_data)
+def basic_plot_from_df(df, out_file = None):
     return basic_plot(((col, df.index, df[col]) for col in df.columns),
                       out_file = out_file)
+
+
+def basic_plot_via_df(raw_data, out_file = None):
+    basic_plot_from_df(pandas.DataFrame(raw_data),
+                       out_file = out_file)

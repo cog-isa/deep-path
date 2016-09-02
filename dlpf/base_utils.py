@@ -5,7 +5,7 @@
 import logging, sys, os, cPickle, itertools, \
     math, multiprocessing as mp, glob, pandas, \
     collections, functools, traceback, re, numpy, \
-    ujson
+    ujson, importlib, yaml, shutil
 
 
 LOGGING_LEVELS = {
@@ -17,9 +17,7 @@ LOGGING_LEVELS = {
 }
 
 def init_log(out_file = None, stderr = False, level = logging.DEBUG):
-    all_loggers = [logging.getLogger(),
-                   logging.getLogger('gensim.models.word2vec'),
-                   logging.getLogger('gensim.corpora.dictionary')]
+    all_loggers = [logging.getLogger()]
 
     log_formatter = logging.Formatter('%(asctime)-15s %(levelname)10s %(message)s')
 
@@ -123,6 +121,11 @@ def try_assign_theano_on_free_gpu():
     raise RuntimeError('no GPUs available')
 
 
+def no_copy_update(d, **updates):
+    d.update(updates)
+    return d
+
+
 def copy_and_update(d, **updates):
     d = dict(d)
     d.update(updates)
@@ -130,12 +133,52 @@ def copy_and_update(d, **updates):
 
 
 def copy_except(src, fields_to_skip):
-    return { k : v for for k, v in src.viewitems() if not k in fields_to_skip}
+    return { k : v for k, v in src.viewitems() if not k in fields_to_skip}
 
 
 def add_filename_suffix(fname, suffix):
     base_name, ext = os.path.splitext(fname)
     return base_name + suffix + ext
 
+
 def floor_to_number(what, how):
     return int((float(what) / how) * how)
+
+
+def load_yaml(fname):
+    with open(fname, 'r') as f:
+        return yaml.load(f)
+
+
+def import_name_from_module(name):
+    mod_name, cls_name = name.rsplit('.', 1)
+    mod = importlib.import_module(mod_name)
+    return getattr(mod, cls_name)
+
+
+def load_object_by_name(name, *args, **kwargs):
+    return import_name_from_module(name)(*args, **kwargs)
+
+
+def load_object_from_dict(info, **override_kwargs):
+    # print info
+    return load_object_by_name(info['ctor'],
+                               *info.get('args', []),
+                               **copy_and_update(info.get('kwargs', {}),
+                                                 **override_kwargs))
+
+
+def load_object_from_yaml(fname, **override_kwargs):
+    return load_object_from_dict(load_yaml(fname),
+                                 **override_kwargs)
+
+
+def ensure_dir_exists(dirname):
+    if not os.path.exists(dirname):
+        os.makedirs(dirname)
+
+
+def copy_files(from_dir, fnames, to_dir):
+    for fname in fnames:
+        shutil.copy2(os.path.join(from_dir, fname),
+                     os.path.join(to_dir, fname))

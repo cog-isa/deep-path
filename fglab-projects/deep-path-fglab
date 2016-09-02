@@ -1,0 +1,18 @@
+{
+  "env": {
+    "type": "string",
+    "default": "configs/env/default.yaml"
+  },
+  "agent": {
+    "type": "string",
+    "default": "configs/agent/default.yaml"
+  },
+  "apply": {
+    "type": "string",
+    "default": "data/apply/default.yaml"
+  },
+  "folds": {
+    "type": "string",
+    "default": "data/current/folds"
+  }
+}

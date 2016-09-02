@@ -1,28 +1,26 @@
+import re, os
 from keras.callbacks import Callback
 from keras.optimizers import RMSprop, Adagrad, Nadam, Adadelta
-from .plot_utils import basic_plot_df
 from .base_utils import add_filename_suffix, copy_except, floor_to_number
-
+from .stats import StatHolder
 
 LOGS_TO_IGNORE = ['batch', 'size']
 
 class LossHistory(Callback):
-    def on_train_begin(self, logs = {}, logs_to_ignore = LOGS_TO_IGNORE):
-        self.batch_data = []
-        self.epoch_data = []
+    def __init__(self, logs_to_ignore = LOGS_TO_IGNORE):
         self.logs_to_ignore = logs_to_ignore
+        self.batch_stats = StatHolder()
+        self.epoch_stats = StatHolder()
+
+    def on_train_begin(self, logs = {}):
+        self.batch_stats = StatHolder()
+        self.epoch_stats = StatHolder()
 
     def on_batch_end(self, batch, logs = {}):
-        self.batch_data.append(copy_except(logs, self.logs_to_ignore))
+        self.batch_stats.add_step(**copy_except(logs, self.logs_to_ignore))
 
     def on_epoch_end(self, epoch, logs = {}):
-        self.epoch_data.append(copy_except(logs, self.logs_to_ignore))
-
-    def plot(self, out_file):
-        basic_plot_df(self.batch_data,
-                      out_file = add_filename_suffix(out_file, '_batch') if out_file else None)
-        basic_plot_df(self.epoch_data,
-                      out_file = add_filename_suffix(out_file, '_epoch') if out_file else None)
+        self.epoch_stats.add_step(**copy_except(logs, self.logs_to_ignore))
 
 
 _OPTIMIZERS = {
@@ -49,3 +47,21 @@ def choose_samples_per_epoch(total_samples_number, batch_size, val_part, passes_
     
     return (floor_to_number(train_samples_per_epoch_raw, batch_size),
             floor_to_number(val_samples_per_epoch_raw, batch_size))
+
+
+_THEANO_DEVICES_TO_TRY = ['gpu1', 'gpu0']
+_GET_DEVICE=re.compile('device=([^,]+)')
+def try_assign_theano_on_free_gpu():
+    match = _GET_DEVICE.search(os.environ['THEANO_FLAGS'])
+    if match and match.group(1) == 'cpu':
+        return
+
+    import theano.sandbox.cuda
+    for dev in _THEANO_DEVICES_TO_TRY:
+        try:
+            theano.sandbox.cuda.use(dev)
+            return
+        except:
+            print traceback.format_exc()
+            pass
+    raise RuntimeError('no GPUs available')

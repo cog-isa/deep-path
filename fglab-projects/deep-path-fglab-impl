@@ -1,0 +1,12 @@
+"<project_id>": {
+  "cwd": ".",
+  "command": "docker",
+  "args": ["run", "--rm",
+    "-v", "/opt/rsuvorov/sumtel:/notebook",
+    "-v", "/opt/fglab/fglab-scripts/results/sumtel/featureset1:/results",
+    "windj007/jupyter-keras-tools",
+    "./evaluate_featureset1.py"],
+  "options": "double-dash",
+  "capacity": "0.05",
+  "results": "/root/FGMachine/results/sumtel/featureset1"
+}

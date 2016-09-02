@@ -16,7 +16,7 @@ class SequentialTaskPolicy(BaseTaskPolicy):
         self.cur_task_i = 0
 
     def choose_next_task(self):
-        result = self.task_set[self.task_ids[self.cur_task_id]]
+        result = self.task_set[self.task_ids[self.cur_task_i]]
         self.cur_task_i += 1
         if self.cur_task_i >= len(self.task_ids):
             self.cur_task_i = 0
@@ -28,7 +28,7 @@ class RandomTaskPolicy(BaseTaskPolicy):
         self.rand = rand or random.Random()
 
     def choose_next_task(self):
-        task_id = self.np_random.choice(self.task_set.keys())
+        task_id = self.rand.choice(self.task_set.keys())
         return self.task_set[task_id]
 
 

@@ -1,16 +1,16 @@
 import keras
-from keras.layers import Dense
+from keras.layers import Dense, Flatten
 
 from .base import BaseKerasAgent
 
 
-class OneLayerAgent(object):
+class OneLayerAgent(BaseKerasAgent):
     def _build_inner_model(self, input_layer):
         h = Flatten()(input_layer)
         return h
 
 
-class TwoLayerAgent(object):
+class TwoLayerAgent(BaseKerasAgent):
     def __init__(self,
                  hidden_size = 10,
                  hidden_activation = 'relu',

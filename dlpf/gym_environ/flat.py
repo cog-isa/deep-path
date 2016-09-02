@@ -1,16 +1,19 @@
 import itertools, numpy
+import gym.spaces
 from scipy.spatial.distance import euclidean
 from .base import BasePathFindingByPixelEnv
-from .utils import line_intersection
+from .utils import line_intersection, build_distance_map
 
 
 class PathFindingByPixelWithDistanceMapEnv(BasePathFindingByPixelEnv):
     def _get_usual_reward(self, new_position):
-        old_height = self.distance_map[self.cur_position_discrete]
+        old_height = self.distance_map[tuple(self.cur_position_discrete)]
         new_height = self.distance_map[tuple(new_position)]
         return old_height - new_height
 
     def _init_state(self):
+        self.distance_map = build_distance_map(self.cur_task.local_map,
+                                               self.path_policy.get_global_goal())
         return self._get_state()
 
     def _get_state(self):
@@ -26,9 +29,9 @@ class PathFindingByPixelWithDistanceMapEnv(BasePathFindingByPixelEnv):
         y_to = min(self.cur_position_discrete[0] + self.vision_range + 1, local_map.shape[0])
 
         for point in itertools.product(range(y_from, y_to), range(x_from, x_to)):
-            if local_map[points] > 0:
+            if local_map[point] > 0:
                 continue
-            result[point] = 0
+            result[point[0] - y_from, point[1] - x_from] = 0
 
         goal = self.path_policy.get_global_goal()
         if x_from <= goal[1] < x_to and y_from <= goal[0] < y_to:
@@ -54,25 +57,31 @@ class PathFindingByPixelWithDistanceMapEnv(BasePathFindingByPixelEnv):
             inter_point = None
             for border_i, border in enumerate(borders):
                 cur_inter_point = line_intersection(line_to_goal, border)
+                if cur_inter_point is None:
+                    continue
                 cur_dist = euclidean(self.cur_position_discrete, cur_inter_point)
-                if 0 <= cur_inter_point[0] - from_y < result.shape[0] \
-                    and 0 <= cur_inter_point[1] - from_x < result.shape[1] \
+                if 0 <= cur_inter_point[0] - y_from < result.shape[0] \
+                    and 0 <= cur_inter_point[1] - x_from < result.shape[1] \
                     and cur_dist < best_dist:
                     best_dist = cur_dist
-                    iter_point = cur_inter_point
+                    inter_point = cur_inter_point
 
-            result[inter_point[0] - y_from][inter_point[1] - x_from] = self.target_on_border_reward
-        return seen
+            result[inter_point[0] - y_from, inter_point[1] - x_from] = self.target_on_border_reward
+        return result
 
     def _get_observation_space(self, map_shape):
         return gym.spaces.Box(low = 0,
                               high = 1,
-                              shape = map_shape)
-
+                              shape = (2 * self.vision_range + 1, 2 * self.vision_range + 1))
+    
     def _configure(self,
                    vision_range = 10,
                    target_on_border_reward = 5,
                    *args, **kwargs):
-        super(PathFindingByPixelWithDistanceMapEnv, self)._configure(*args, **kwargs)
         self.vision_range = vision_range
         self.target_on_border_reward = target_on_border_reward
+        super(PathFindingByPixelWithDistanceMapEnv, self)._configure(*args, **kwargs)
+        
+
+    def _current_optimal_score(self):
+        return self.distance_map[self.path_policy.get_start_position()]
