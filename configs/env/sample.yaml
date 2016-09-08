@@ -1,0 +1,13 @@
+ctor: PathFindingByPixelWithDistanceMapEnv-v1
+kwargs:
+  done_reward: 10
+  local_goal_reward: 5
+  map_shape: !!python/tuple [10, 10]
+  tasks_dir: data/sample/imported/paths
+  maps_dir: data/sample/imported/maps
+  obstacle_punishment: 1
+  path_policy: random_start_and_finish_straight
+  stop_game_after_invalid_action: false
+  target_on_border_reward: 5
+  task_policy: sequential
+  vision_range: 4

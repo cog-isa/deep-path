@@ -1,0 +1,10 @@
+ctor: dlpf.agents.our_dqn.OneLayerAgent
+kwargs:
+  action_policy: {ctor: epsilon_greedy}
+  batch_size: 32
+  epoch_number: 100
+  loss: mean_squared_error
+  max_memory_size: 250
+  optimizer: rmsprop
+  passes_over_train_data: 2
+  validation_part: 0.1
