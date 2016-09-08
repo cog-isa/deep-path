@@ -1,10 +1,29 @@
-import re, os
+import re, os, logging
 from keras.callbacks import Callback
 from keras.optimizers import RMSprop, Adagrad, Nadam, Adadelta
 from .base_utils import add_filename_suffix, copy_except, floor_to_number
 from .stats import StatHolder
 
+
+logger = logging.getLogger(__name__)
+
+
 LOGS_TO_IGNORE = ['batch', 'size']
+
+
+def copy_except_and_map(src, keys_to_ignore, converter):
+    return { k : converter(v) for k, v in copy_except(src, keys_to_ignore).viewitems() }
+
+
+def numpy_array_to_num(obj):
+    if isinstance(obj, numpy.ndarray):
+        if numpy.prod(obj.shape) > 0:
+            return obj.shape[0][0]
+        else:
+            return None
+    else:
+        return obj
+
 
 class LossHistory(Callback):
     def __init__(self, logs_to_ignore = LOGS_TO_IGNORE):
@@ -19,10 +38,14 @@ class LossHistory(Callback):
         self.epoch_stats.new_episode()
 
     def on_batch_end(self, batch, logs = {}):
-        self.batch_stats.add_step(**copy_except(logs, self.logs_to_ignore))
+        self.batch_stats.add_step(**copy_except_and_map(logs,
+                                                        self.logs_to_ignore,
+                                                        numpy_array_to_num))
 
     def on_epoch_end(self, epoch, logs = {}):
-        self.epoch_stats.add_step(**copy_except(logs, self.logs_to_ignore))
+        self.epoch_stats.add_step(**copy_except_and_map(logs,
+                                                        self.logs_to_ignore,
+                                                        numpy_array_to_num))
 
 
 _OPTIMIZERS = {

@@ -23,7 +23,7 @@ def basic_plot(title_data_tuples, out_file = None):
 
 
 def basic_plot_from_df(df, out_file = None):
-    if sum(df.shape) > 0:
+    if df.shape[1] > 0:
         df = pandas.get_dummies(df)
     return basic_plot(((col, df.index, df[col].values) for col in df.columns),
                       out_file = out_file)
