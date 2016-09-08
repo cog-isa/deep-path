@@ -142,7 +142,7 @@ def add_filename_suffix(fname, suffix):
 
 
 def floor_to_number(what, how):
-    return int((float(what) / how) * how)
+    return math.floor(float(what) / how) * how
 
 
 def load_yaml(fname):

@@ -96,9 +96,6 @@ def evaluate_agent_with_configs(environment_conf_fname,
                                              folds_dir,
                                              **apply_kwargs)
 
-    train_stats = aggregate_application_stats(train_stats)
-    test_stats = aggregate_application_stats(test_stats)
-    
     return (aggregate_application_run_stats(train_stats),
             aggregate_application_run_stats(test_stats),
             aggregate_application_base_stats(inner_batch_stats),

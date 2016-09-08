@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import argparse, logging
+import argparse, logging, os
 
 from dlpf.base_utils import init_log, LOGGING_LEVELS, ensure_dir_exists
 from dlpf.benchmark import evaluate_agent_with_configs

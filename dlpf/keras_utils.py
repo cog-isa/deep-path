@@ -14,7 +14,9 @@ class LossHistory(Callback):
 
     def on_train_begin(self, logs = {}):
         self.batch_stats = StatHolder()
+        self.batch_stats.new_episode()
         self.epoch_stats = StatHolder()
+        self.epoch_stats.new_episode()
 
     def on_batch_end(self, batch, logs = {}):
         self.batch_stats.add_step(**copy_except(logs, self.logs_to_ignore))
@@ -39,14 +41,14 @@ def get_optimizer(name = DEFAULT_OPTIMIZER, *args, **kwargs):
     return _OPTIMIZERS[name](*args, **kwargs)
 
 def choose_samples_per_epoch(total_samples_number, batch_size, val_part, passes_over_train_data, epoch_number):
-    train_samples_total = total_samples * (1 - self.validation_part)
+    train_samples_total = total_samples_number * (1 - val_part)
     train_samples_per_epoch_raw = train_samples_total * passes_over_train_data / epoch_number
 
-    val_samples_total = total_samples * self.validation_part
+    val_samples_total = total_samples_number * val_part
     val_samples_per_epoch_raw = val_samples_total * passes_over_train_data / epoch_number
     
-    return (floor_to_number(train_samples_per_epoch_raw, batch_size),
-            floor_to_number(val_samples_per_epoch_raw, batch_size))
+    return (int(floor_to_number(train_samples_per_epoch_raw, batch_size)),
+            int(floor_to_number(val_samples_per_epoch_raw, batch_size)))
 
 
 _THEANO_DEVICES_TO_TRY = ['gpu1', 'gpu0']

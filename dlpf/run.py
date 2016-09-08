@@ -20,7 +20,7 @@ def apply_agent(environment,
     stat = StatHolder()
     
     for episode_i in xrange(episodes_number):
-        logger.debug('Start episode %d' % episode_i)
+        logger.info('Start episode %d' % episode_i)
 
         observation = environment.reset()
         agent.new_episode()
@@ -29,7 +29,7 @@ def apply_agent(environment,
         reward, done = (initial_reward, False) if allow_train else (None, None)
 
         for step_i in range(max_steps):
-            action = agent.act(observation)
+            action = agent.act(observation, reward = reward, done = done)
             observation, reward, done, info = environment.step(action)
             stat.add_step(reward = reward, info = info)
 

@@ -1,4 +1,4 @@
-import random, numpy, collections
+import random, numpy, collections, logging
 from scipy.spatial.distance import euclidean
 
 import keras
@@ -10,11 +10,14 @@ from dlpf.keras_utils import get_optimizer, choose_samples_per_epoch
 from .policies import get_action_policy, BaseActionPolicy
 
 
+logger = logging.getLogger(__name__)
+
+
 def replay_train_data_generator(episodes, batch_size, actions_number, rand = random.Random()):
     '''
     Episodes is a list of list of MemoryRecord or compatible type
     '''
-    if not episodes:
+    if len(episodes) == 0:
         return
 
     input_batch = numpy.zeros((batch_size, ) + episodes[0][0].observation.shape,
@@ -24,8 +27,8 @@ def replay_train_data_generator(episodes, batch_size, actions_number, rand = ran
     batch_i = 0
 
     while True:
-        episode = episodes[rand.randint(0, len(episodes))]
-        step = episode[rand.randint(0, len(episodes[episode_i]))]
+        episode = episodes[rand.randint(0, len(episodes) - 1)]
+        step = episode[rand.randint(0, len(episode) - 1)]
 
         input_batch[batch_i] = step.observation
         output_batch[batch_i, step.action] = step.reward
@@ -38,15 +41,21 @@ def replay_train_data_generator(episodes, batch_size, actions_number, rand = ran
 
 
 def split_train_val_replay_gens(episodes, batch_size, actions_number, val_part = 0.1, rand = random.Random()):
-    indices = range(len(observations))
+    indices = range(len(episodes))
     rand.shuffle(indices)
-    
+
     split_i = int(len(indices) * (1 - val_part))
     train_indices = indices[:split_i]
     val_indices = indices[split_i:]
 
-    return (replay_train_data_generator(memory[train_indices], batch_size, actions_number, rand = rand),
-            replay_train_data_generator(memory[val_indices], batch_size, actions_number, rand = rand))
+    return (replay_train_data_generator([episodes[i] for i in train_indices],
+                                        batch_size,
+                                        actions_number,
+                                        rand = rand),
+            replay_train_data_generator([episodes[i] for i in val_indices],
+                                        batch_size,
+                                        actions_number,
+                                        rand = rand))
 
 
 MemoryRecord = collections.namedtuple('MemoryRecord',
