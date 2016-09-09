@@ -2,11 +2,17 @@
   "cwd": ".",
   "command": "docker",
   "args": ["run", "--rm",
-    "-v", "/opt/rsuvorov/sumtel:/notebook",
-    "-v", "/opt/fglab/fglab-scripts/results/sumtel/featureset1:/results",
-    "windj007/jupyter-keras-tools",
-    "./evaluate_featureset1.py"],
+    "-v", "/opt/deep-path/deep-path:/notebook",
+    "-v", "/opt/fglab/fglab-scripts/results/deep-path:/results",
+    "--volume-driver=nvidia-docker",
+    "--volume=nvidia_driver_352.39:/usr/local/nvidia:ro",
+    "--device=/dev/nvidiactl",
+    "--device=/dev/nvidia-uvm",
+    "--device=/dev/nvidia0",
+    "--device=/dev/nvidia1",
+    "deep-path",
+    "./evaluate.py"],
   "options": "double-dash",
-  "capacity": "0.05",
-  "results": "/root/FGMachine/results/sumtel/featureset1"
+  "capacity": "0.5",
+  "results": "/root/FGMachine/results/deep-path"
 }
