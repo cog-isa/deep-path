@@ -2,7 +2,8 @@
 
 import argparse, logging, os
 
-from dlpf.base_utils import init_log, LOGGING_LEVELS, ensure_dir_exists
+from dlpf.base_utils import init_log, LOGGING_LEVELS, ensure_dir_exists, \
+    copy_yaml_configs_to_json
 from dlpf.benchmark import evaluate_agent_with_configs
 from dlpf.plot_utils import basic_plot_from_df
 from dlpf.fglab_utils import create_scores_file
@@ -21,7 +22,8 @@ if __name__ == '__main__':
     aparser.add_argument('--agent', type = str, help = 'Path to agent config to use')
     aparser.add_argument('--folds', type = str, help = 'Path to directory with cross-validation data')
     aparser.add_argument('--apply', type = str, help = 'Path to apply_agent config to use')
-    aparser.add_argument('--output', type = str, help = 'Where to store results')
+    aparser.add_argument('--output', type = str, default = '.', help = 'Where to store results')
+    aparser.add_argument('--_id', type = str, default = None, help = 'FGLab experiment id')
     aparser.add_argument('--level', type = str,
                          choices = LOGGING_LEVELS.keys(),
                          default = 'info',
@@ -38,6 +40,9 @@ if __name__ == '__main__':
                                             args.folds,
                                             args.apply)
 
+    if args._id:
+        args.output = os.path.join(args.output, args._id)
+
     ensure_dir_exists(args.output)
     for stat_title, stat in zip(STATS_TITLES, all_stats):
         basic_plot_from_df(stat.episodes,
@@ -47,3 +52,7 @@ if __name__ == '__main__':
     create_scores_file(os.path.join(args.output, 'scores.json'),
                        train_score = all_stats[0].score,
                        test_score = all_stats[1].score)
+    copy_yaml_configs_to_json(os.path.join(args.output, 'configs.json'),
+                              env = args.env,
+                              agent = args.agent,
+                              apply = args.apply)

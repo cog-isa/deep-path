@@ -67,7 +67,7 @@ def load_json(fname):
 
 def save_json(obj, fname):
     with open(fname, 'w') as f:
-        ujson.dump(obj, f, indent = 2)
+        ujson.dump(obj, f, indent = 4)
 
 
 class MultiIndexableDataset(object):
@@ -182,3 +182,9 @@ def copy_files(from_dir, fnames, to_dir):
     for fname in fnames:
         shutil.copy2(os.path.join(from_dir, fname),
                      os.path.join(to_dir, fname))
+
+
+def copy_yaml_configs_to_json(out_file, **configs):
+    result = { conf_title : load_yaml(conf_path)
+              for conf_title, conf_path in configs.viewitems() }
+    save_json(result, out_file)
