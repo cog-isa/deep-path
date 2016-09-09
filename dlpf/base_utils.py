@@ -142,6 +142,8 @@ def add_filename_suffix(fname, suffix):
 
 
 def floor_to_number(what, how):
+    if abs(what) < how:
+        return how
     return math.floor(float(what) / how) * how
 
 
