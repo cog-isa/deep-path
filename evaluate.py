@@ -6,9 +6,9 @@ from dlpf.base_utils import init_log, LOGGING_LEVELS, ensure_dir_exists, \
     copy_yaml_configs_to_json
 from dlpf.benchmark import evaluate_agent_with_configs
 from dlpf.plot_utils import basic_plot_from_df
-from dlpf.fglab_utils import create_scores_file
+from dlpf.fglab_utils import create_scores_file, create_charts_file
 from dlpf.keras_utils import try_assign_theano_on_free_gpu
-
+from dlpf.perf_utils import Profiler
 
 logger = logging.getLogger()
 
@@ -31,27 +31,36 @@ if __name__ == '__main__':
 
     args = aparser.parse_args()
 
-    logger = init_log(stderr = True, level = LOGGING_LEVELS[args.level])
+    if args._id:
+        args.output = os.path.join(args.output, args._id)
+    ensure_dir_exists(args.output)
+
+    logger = init_log(stderr = True,
+                      level = LOGGING_LEVELS[args.level],
+                      out_file = os.path.join(args.output, 'evaluate.log'))
 
     try_assign_theano_on_free_gpu()
 
-    all_stats = evaluate_agent_with_configs(args.env,
-                                            args.agent,
-                                            args.folds,
-                                            args.apply)
+    with Profiler(logger):
+        all_stats = evaluate_agent_with_configs(args.env,
+                                                args.agent,
+                                                args.folds,
+                                                args.apply)
 
-    if args._id:
-        args.output = os.path.join(args.output, args._id)
-
-    ensure_dir_exists(args.output)
     for stat_title, stat in zip(STATS_TITLES, all_stats):
         basic_plot_from_df(stat.episodes,
                            out_file = os.path.join(args.output, '%s_episodes.png' % stat_title))
         basic_plot_from_df(stat.full,
-                           out_file = os.path.join(args.output, '%s_full.png' % stat_title))    
+                           out_file = os.path.join(args.output, '%s_full.png' % stat_title))
+
     create_scores_file(os.path.join(args.output, 'scores.json'),
                        train_score = all_stats[0].score,
                        test_score = all_stats[1].score)
+    create_charts_file(os.path.join(args.output, 'charts.json'),
+                       **{ '_'.join((stat_title, attr)) : getattr(stat, attr)
+                          for stat_title, stat in zip(STATS_TITLES, all_stats)
+                          for attr in ('episodes', 'full') })
+
     copy_yaml_configs_to_json(os.path.join(args.output, 'configs.json'),
                               env = args.env,
                               agent = args.agent,
