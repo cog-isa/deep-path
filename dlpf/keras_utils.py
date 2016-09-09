@@ -57,8 +57,8 @@ def get_available_optimizers():
     return list(_OPTIMIZERS.keys())
 
 def get_optimizer(ctor = DEFAULT_OPTIMIZER, *args, **kwargs):
-    assert name in _OPTIMIZERS, 'Unknown optimizer %s' % name
-    return _OPTIMIZERS[name](*args, **kwargs)
+    assert ctor in _OPTIMIZERS, 'Unknown optimizer %s' % ctor
+    return _OPTIMIZERS[ctor](*args, **kwargs)
 
 def choose_samples_per_epoch(total_samples_number, batch_size, val_part, passes_over_train_data, epoch_number):
     train_samples_total = total_samples_number * (1 - val_part)
