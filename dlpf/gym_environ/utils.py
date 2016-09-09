@@ -46,24 +46,23 @@ def build_distance_map(local_map, finish):
     
     queue = collections.deque()
     queue.append((finish, 0))
+    result[finish] = 0
 
-    seen_points = set()
-    seen_points.add(finish)
     while queue:
         cur_point, cur_dist = queue.popleft()
-        result[cur_point] = cur_dist
         new_dist = cur_dist + 1
 
         for dy, dx in BY_PIXEL_ACTION_DIFFS.viewvalues():
             new_point = (cur_point[0] + dy, cur_point[1] + dx)
 
-            if (0 <= new_point[0] < local_map.shape[0] and 0 <= new_point[1] < local_map.shape[0] # we are in boundaries
-                and local_map[new_point] == 0 # we are not going to obstacle
-                and new_point not in seen_points): # we are here for the first time
+            if (0 <= new_point[0] < local_map.shape[0] and 0 <= new_point[1] < local_map.shape[1] # we are in boundaries
+                and new_point != finish
+                and result[new_point] == 0): # we are not going to obstacle and we have not filled this cell yet
                 queue.append((new_point, new_dist))
-                seen_points.add(new_point)
+                result[new_point] = new_dist
 
     return result
+
 
 def check_finish_achievable(local_map, start, finish):
     if start == finish:
