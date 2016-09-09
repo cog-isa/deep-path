@@ -1,4 +1,4 @@
-import re, os, logging
+import re, os, logging, numpy
 from keras.callbacks import Callback
 from keras.optimizers import RMSprop, Adagrad, Nadam, Adadelta
 from .base_utils import add_filename_suffix, copy_except, floor_to_number
@@ -15,13 +15,10 @@ def copy_except_and_map(src, keys_to_ignore, converter):
     return { k : converter(v) for k, v in copy_except(src, keys_to_ignore).viewitems() }
 
 
-def numpy_array_to_num(obj):
-    if isinstance(obj, numpy.ndarray):
-        if numpy.prod(obj.shape) > 0:
-            return obj.shape[0][0]
-        else:
-            return None
-    else:
+def try_ensure_float(obj):
+    try:
+        return float(obj)
+    except TypeError:
         return obj
 
 
@@ -40,12 +37,12 @@ class LossHistory(Callback):
     def on_batch_end(self, batch, logs = {}):
         self.batch_stats.add_step(**copy_except_and_map(logs,
                                                         self.logs_to_ignore,
-                                                        numpy_array_to_num))
+                                                        try_ensure_float))
 
     def on_epoch_end(self, epoch, logs = {}):
         self.epoch_stats.add_step(**copy_except_and_map(logs,
                                                         self.logs_to_ignore,
-                                                        numpy_array_to_num))
+                                                        try_ensure_float))
 
 
 _OPTIMIZERS = {
