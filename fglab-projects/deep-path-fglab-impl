@@ -4,7 +4,6 @@
   "args": ["run", "--rm",
     "-v", "/opt/deep-path/deep-path:/notebook",
     "-v", "/opt/fglab/fglab-scripts/results/deep-path:/results",
-    "--volume-driver=nvidia-docker",
     "--volume=nvidia_driver_352.39:/usr/local/nvidia:ro",
     "--device=/dev/nvidiactl",
     "--device=/dev/nvidia-uvm",

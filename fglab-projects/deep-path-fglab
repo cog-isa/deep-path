@@ -9,7 +9,7 @@
   },
   "apply": {
     "type": "string",
-    "default": "data/apply/default.yaml"
+    "default": "configs/apply/default.yaml"
   },
   "folds": {
     "type": "string",
