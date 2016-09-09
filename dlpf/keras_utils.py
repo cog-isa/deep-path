@@ -56,7 +56,7 @@ DEFAULT_OPTIMIZER = 'rmsprop'
 def get_available_optimizers():
     return list(_OPTIMIZERS.keys())
 
-def get_optimizer(name = DEFAULT_OPTIMIZER, *args, **kwargs):
+def get_optimizer(ctor = DEFAULT_OPTIMIZER, *args, **kwargs):
     assert name in _OPTIMIZERS, 'Unknown optimizer %s' % name
     return _OPTIMIZERS[name](*args, **kwargs)
 
