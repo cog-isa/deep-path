@@ -85,7 +85,9 @@ class BaseKerasAgent(object):
             else get_action_policy(**action_policy)
         self.max_memory_size = max_memory_size
         self.loss = loss
-        self.optimizer = optimizer
+        self.optimizer = get_optimizer(optimizer) \
+            if isinstance(optimizer, (str, unicode)) \
+            else get_optimizer(**optimizer)
         self.model_metrics = model_metrics
         self.model_callbacks = model_callbacks
         self.epoch_number = epoch_number
