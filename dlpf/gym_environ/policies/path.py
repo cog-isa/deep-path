@@ -1,5 +1,5 @@
-import random
-from ..utils import check_finish_achievable
+import random, numpy
+from ..utils_compiled import check_finish_achievable
 
 
 class BasePathPolicy(object):
@@ -59,7 +59,9 @@ class RandomStartAndFinishMixin(object):
                 self.finish = self._gen_point()
                 if local_map[self.start] == 0 \
                     and local_map[self.finish] == 0 \
-                    and check_finish_achievable(local_map, self.start, self.finish):
+                    and check_finish_achievable(numpy.array(local_map, dtype = numpy.int),
+                                                numpy.array(self.start, dtype = numpy.int),
+                                                numpy.array(self.finish, dtype = numpy.int)):
                     break
         
     def get_start_position(self):

@@ -2,7 +2,8 @@ import itertools, numpy, logging
 import gym.spaces
 from scipy.spatial.distance import euclidean
 from .base import BasePathFindingByPixelEnv
-from .utils import line_intersection, build_distance_map
+from .utils import line_intersection
+from .utils_compiled import build_distance_map
 
 
 logger = logging.getLogger(__name__)
