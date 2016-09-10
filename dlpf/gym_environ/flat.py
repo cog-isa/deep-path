@@ -16,8 +16,8 @@ class PathFindingByPixelWithDistanceMapEnv(BasePathFindingByPixelEnv):
         return old_height - new_height
 
     def _init_state(self):
-        self.distance_map = build_distance_map(self.cur_task.local_map,
-                                               self.path_policy.get_global_goal())
+        self.distance_map = build_distance_map(numpy.array(self.cur_task.local_map, dtype = numpy.int),
+                                               numpy.array(self.path_policy.get_global_goal(), dtype = numpy.int))
         return self._get_state()
 
     def _get_state(self):
