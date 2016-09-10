@@ -8,7 +8,14 @@ then
     BIND_PORT=""
 fi
 
-nvidia-docker run -ti --rm \
+
+CMD="docker"
+if which nvidia-docker
+then
+    CMD="nvidia-docker"
+fi
+
+$CMD run -ti --rm \
     -e "HASHED_PASSWORD=$YOUR_HASHED_PASSWORD" \
     -e "SSL=1" \
     -v /home/rsuvorov/projects/docker-jupyter-keras-tools/certs:/jupyter/certs \
