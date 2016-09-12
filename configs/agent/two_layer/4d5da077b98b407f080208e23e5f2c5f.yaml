@@ -1,0 +1,12 @@
+ctor: dlpf.agents.our_dqn.TwoLayerAgent
+kwargs:
+  action_policy: {ctor: annealed_epsilon_greedy, decrease_coef: 0.99, eps: 0.6}
+  batch_size: 64
+  epoch_number: 20
+  hidden_activation: tanh
+  hidden_size: 8
+  loss: mean_squared_error
+  max_memory_size: 250
+  optimizer: {ctor: adam, lr: 0.1}
+  passes_over_train_data: 10
+  validation_part: 0.1
