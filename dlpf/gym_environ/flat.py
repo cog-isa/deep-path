@@ -100,7 +100,6 @@ class PathFindingByPixelWithDistanceMapEnv(BasePathFindingByPixelEnv):
         self.vision_range = vision_range
         self.target_on_border_reward = target_on_border_reward
         super(PathFindingByPixelWithDistanceMapEnv, self)._configure(*args, **kwargs)
-        
 
     def _current_optimal_score(self):
-        return self.distance_map[self.path_policy.get_start_position()]
+        return self.distance_map[self.path_policy.get_start_position()] + self._get_done_reward()

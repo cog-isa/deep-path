@@ -40,7 +40,7 @@ def aggregate_application_run_stats(stats_lst):
                                                                                  for stat in stats_lst
                                                                                  for ep in stat.episodes_data)))
     episodes_stats = pandas.DataFrame(data = [no_copy_update(ep.info,
-                                                             score = (sum(d['reward'] for d in ep.steps)
+                                                             score = (sum(abs(d['reward']) for d in ep.steps)
                                                                       / float(ep.info['optimal_score'])) )
                                               for stat in stats_lst
                                               for ep in stat.episodes_data])
