@@ -1,5 +1,5 @@
 import keras
-from keras.layers import Dense, Flatten
+from keras.layers import Dense, Flatten, Dropout
 
 from .base import BaseKerasAgent
 
@@ -16,10 +16,10 @@ class TwoLayerAgent(BaseKerasAgent):
                  hidden_activation = 'relu',
                  dropout = 0.8,
                  *args, **kwargs):
-        super(TwoLayerAgent, self).__init__(*args, **kwargs)
-        self.hidden_size = 10
+        self.hidden_size = hidden_size
         self.hidden_activation = hidden_activation
         self.dropout = dropout
+        super(TwoLayerAgent, self).__init__(*args, **kwargs)
 
     def _build_inner_model(self, input_layer):
         h = Flatten()(input_layer)
