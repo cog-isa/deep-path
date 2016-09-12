@@ -1,1 +1,1 @@
-{episodes_number: 3000, max_steps: 100, train_each_episodes: 10}
+{episodes_number: 1500, max_steps: 100, train_each_episodes: 10}

@@ -1,6 +1,9 @@
-ctor: dlpf.agents.our_dqn.OneLayerAgent
+ctor: dlpf.agents.our_dqn.TwoLayerAgent
 kwargs:
-  action_policy: {ctor: epsilon_greedy}
+  hidden_size: 20
+  hidden_activation: relu
+  dropout: 0.8
+  action_policy: {ctor: annealed_epsilon_greedy, eps: 0.4, decrease_coef: 0.99}
   batch_size: 64
   epoch_number: 20
   loss: mean_squared_error
