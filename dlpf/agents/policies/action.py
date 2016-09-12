@@ -26,7 +26,7 @@ class EpsilonGreedyPolicy(BaseActionPolicy):
 
 class AnnealedEpsilonGreedyPolicy(EpsilonGreedyPolicy):
     def __init__(self, eps = 0.1, decrease_coef = 0.99, rand = None):
-        super(AnnealedEpsilonPolicy, self).__init__(eps, rand = rand)
+        super(AnnealedEpsilonGreedyPolicy, self).__init__(eps, rand = rand)
         self.init_eps = eps
         self.decrease_coef = decrease_coef
 
