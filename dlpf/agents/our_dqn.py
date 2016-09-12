@@ -16,7 +16,7 @@ class TwoLayerAgent(BaseKerasAgent):
                  hidden_activation = 'relu',
                  dropout = 0.8,
                  *args, **kwargs):
-        super(BaseKerasAgent, self).__init__(*args, **kwargs)
+        super(TwoLayerAgent, self).__init__(*args, **kwargs)
         self.hidden_size = 10
         self.hidden_activation = hidden_activation
         self.dropout = dropout
