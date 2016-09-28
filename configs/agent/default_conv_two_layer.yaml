@@ -1,0 +1,17 @@
+ctor: dlpf.agents.our_dqn.OneConvPlusTwoLayerAgent
+kwargs:
+  hidden_size: 50
+  hidden_activation: relu
+  convolution_cores: 32
+  convolution_core_size: 16
+  convolution_activation: relu
+  dropout1: 0.2
+  dropout2: 0.2
+  action_policy: {ctor: annealed_epsilon_greedy, eps: 0.4, decrease_coef: 0.99999}
+  batch_size: 64
+  epoch_number: 20
+  loss: mean_squared_error
+  max_memory_size: 250
+  optimizer: {ctor: rmsprop, lr: 0.01}
+  passes_over_train_data: 10
+  validation_part: 0.1

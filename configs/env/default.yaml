@@ -9,4 +9,4 @@ kwargs:
   stop_game_after_invalid_action: false
   target_on_border_reward: 5
   task_policy: sequential
-  vision_range: 10
+  vision_range: 50

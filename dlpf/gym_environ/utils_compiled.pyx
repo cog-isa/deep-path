@@ -44,6 +44,6 @@ def build_distance_map(np.ndarray[DTYPE_t, ndim = 2] local_map, np.ndarray[DTYPE
 
 
 def check_finish_achievable(np.ndarray[DTYPE_t, ndim = 2] local_map, np.ndarray[DTYPE_t] start, np.ndarray[DTYPE_t] finish):
-    if start == finish:
+    if  np.allclose(start, finish):
         return True
     return build_distance_map(local_map, finish)[start[0], start[1]] > 0
