@@ -3,7 +3,7 @@ kwargs:
   hidden_size: 50
   hidden_activation: relu
   dropout: 0.2
-  action_policy: {ctor: annealed_epsilon_greedy, eps: 0.8, decrease_coef: 0.99999}
+  action_policy: {ctor: annealed_epsilon_greedy, eps: 0.9, decrease_coef: 0.9995}
   batch_size: 64
   epoch_number: 20
   loss: mean_squared_error
