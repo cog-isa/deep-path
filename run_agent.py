@@ -11,6 +11,7 @@ from dlpf.keras_utils import try_assign_theano_on_free_gpu, LossHistory
 from dlpf.stats import aggregate_application_run_stats, aggregate_application_base_stats
 from dlpf.run import apply_agent
 from dlpf.fglab_utils import create_scores_file
+from dlpf.perf_utils import Profiler
 
 logger = logging.getLogger()
 
@@ -53,7 +54,8 @@ if __name__ == '__main__':
                                   input_shape = env.observation_space.shape,
                                   number_of_actions = env.action_space.n,
                                   model_callbacks = [keras_hist])
-    run_stats = apply_agent(env, agent, **load_yaml(args.apply))
+    with Profiler(logger):
+        run_stats = apply_agent(env, agent, **load_yaml(args.apply))
 
     stats = (aggregate_application_run_stats([run_stats]),
              aggregate_application_base_stats([keras_hist.epoch_stats]),
