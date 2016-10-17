@@ -9,3 +9,6 @@ kwargs:
   passes_over_train_data: 2
   validation_part: 0.1
   keras_verbose: 2
+  early_stopping_patience: 1
+  train_gen_processes_number: 8
+  train_gen_queue_size: 40
