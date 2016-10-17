@@ -77,6 +77,8 @@ class BaseKerasAgent(object):
                  validation_part = 0.1,
                  batch_size = 32,
                  keras_verbose = 0,
+                 train_gen_processes_number = 4,
+                 train_gen_queue_size = 100,
                  split_rand = random.Random()):
         self.input_shape = input_shape
         self.number_of_actions = number_of_actions
@@ -95,6 +97,8 @@ class BaseKerasAgent(object):
         self.validation_part = validation_part
         self.batch_size = batch_size
         self.keras_verbose = keras_verbose
+        self.train_gen_processes_number = train_gen_processes_number
+        self.train_gen_queue_size = train_gen_queue_size
         self.split_rand = split_rand
 
         self.memory = []
@@ -147,7 +151,10 @@ class BaseKerasAgent(object):
                                  verbose = self.keras_verbose,
                                  callbacks = self.model_callbacks,
                                  validation_data = val_gen,
-                                 nb_val_samples = val_samples_per_epoch)
+                                 nb_val_samples = val_samples_per_epoch,
+                                 max_q_size = self.train_gen_queue_size,
+                                 nb_worker = self.train_gen_processes_number,
+                                 pickle_safe = True)
 
     ##############################################################
     ################# Methods optional to implement ##############
