@@ -21,7 +21,7 @@ class TwoLayerAgent(BaseKerasAgent):
         self.dropout = dropout
         super(TwoLayerAgent, self).__init__(*args, **kwargs)
 
-    def _build_inner_model(self, input_layer, shape):
+    def _build_inner_model(self, input_layer):
         h = Flatten()(input_layer)
         h = Dense(self.hidden_size,
                   activation = self.hidden_activation)(h)
@@ -48,7 +48,7 @@ class OneConvPlusTwoLayerAgent(BaseKerasAgent):
         self.dropout2 = dropout2
         super(OneConvPlusTwoLayerAgent, self).__init__(*args, **kwargs)
 
-    def _build_inner_model(self, input_layer, shape):
+    def _build_inner_model(self, input_layer):
         h = Reshape((1, shape))(input_layer)
         h = Convolution2D(self.convolution_cores,
                           self.convolution_core_size, self.convolution_core_size,

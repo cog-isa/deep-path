@@ -106,7 +106,7 @@ class BaseKerasAgent(object):
     ##############################################################
     def _build_model(self):
         input_layer = Input(shape = self.input_shape)
-        inner_model = self._build_inner_model(input_layer, self.input_shape)
+        inner_model = self._build_inner_model(input_layer)
         output_layer = Dense(self.number_of_actions)(inner_model)
         self.model = Model(input_layer, output_layer)
         self.model.compile(self.optimizer,
@@ -169,5 +169,5 @@ class BaseKerasAgent(object):
     ##############################################################
     ################ Methods mandatory to implement ##############
     ##############################################################
-    def _build_inner_model(self, input_layer, shape):
+    def _build_inner_model(self, input_layer):
         raise NotImplemented()

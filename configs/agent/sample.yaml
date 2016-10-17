@@ -1,6 +1,6 @@
 ctor: dlpf.agents.our_dqn.OneLayerAgent
 kwargs:
-  action_policy: {ctor: epsilon_greedy}
+  action_policy: {ctor: annealed_epsilon_greedy, eps: 0.9, decrease_coef: 0.9993}
   batch_size: 32
   epoch_number: 100
   loss: mean_squared_error
@@ -8,3 +8,4 @@ kwargs:
   optimizer: rmsprop
   passes_over_train_data: 2
   validation_part: 0.1
+  keras_verbose: 2
