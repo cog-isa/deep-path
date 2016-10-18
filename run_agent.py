@@ -2,11 +2,13 @@
 
 import argparse, logging, os
 
+os.environ['KERAS_BACKEND'] = 'theano'
+
 from dlpf.gym_environ import load_environment_from_yaml
 from dlpf.base_utils import init_log, LOGGING_LEVELS, ensure_dir_exists, \
     load_object_from_yaml, load_yaml
 from dlpf.benchmark import evaluate_agent_with_configs
-from dlpf.plot_utils import basic_plot_from_df
+from dlpf.plot_utils import basic_plot_from_df, basic_plot_from_df_rolling_mean
 from dlpf.keras_utils import try_assign_theano_on_free_gpu, LossHistory
 from dlpf.stats import aggregate_application_run_stats, aggregate_application_base_stats
 from dlpf.run import apply_agent
@@ -65,8 +67,12 @@ if __name__ == '__main__':
     for stat_name, stat in zip(STATS_NAMES, stats):
         basic_plot_from_df(stat.episodes,
                            out_file = os.path.join(args.output, '%s_episodes.png' % stat_name))
+        basic_plot_from_df_rolling_mean(stat.episodes,
+                                        out_file = os.path.join(args.output, '%s_episodes_smoothed.png' % stat_name))
         basic_plot_from_df(stat.full,
                            out_file = os.path.join(args.output, '%s_full.png' % stat_name))
+        basic_plot_from_df_rolling_mean(stat.full,
+                                        out_file = os.path.join(args.output, '%s_full_smoothed.png' % stat_name))
 
     create_scores_file(os.path.join(args.output, 'scores.json'),
                        train_score = stats[0].score)
