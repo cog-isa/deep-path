@@ -3,7 +3,7 @@ from scipy.spatial.distance import euclidean
 
 import keras
 from keras.models import Model
-from keras.layers import Dense, Input
+from keras.layers import Dense, Input, Activation
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 
 from dlpf.base_utils import load_object_from_dict
@@ -43,7 +43,8 @@ class BaseKerasAgent(object):
                  number_of_actions = 1,
                  action_policy = get_action_policy(),
                  max_memory_size = 250,
-                 loss = 'squared_hinge',
+                 output_activation = 'linear',
+                 loss = 'mean_squared_error',
                  optimizer = get_optimizer(),
                  model_metrics = [],
                  model_callbacks = [],
@@ -64,6 +65,7 @@ class BaseKerasAgent(object):
             if isinstance(action_policy, (str, unicode)) \
             else get_action_policy(**action_policy)
         self.max_memory_size = max_memory_size
+        self.output_activation = output_activation
         self.loss = loss
         self.optimizer = get_optimizer(optimizer) \
             if isinstance(optimizer, (str, unicode)) \
@@ -102,7 +104,8 @@ class BaseKerasAgent(object):
     def _build_model(self):
         input_layer = Input(shape = self.input_shape)
         inner_model = self._build_inner_model(input_layer)
-        output_layer = Dense(self.number_of_actions)(inner_model)
+        last_layer = Dense(self.number_of_actions)(inner_model)
+        output_layer = Activation(self.output_activation)(last_layer)
         self.model = Model(input_layer, output_layer)
         self.model.compile(self.optimizer,
                            loss = self.loss,
