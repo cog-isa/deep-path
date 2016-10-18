@@ -1,4 +1,4 @@
-import random, logging
+import random, logging, numpy
 
 
 logger = logging.getLogger()
@@ -13,6 +13,35 @@ class BaseActionPolicy(object):
     
     def choose_action(self, actions):
         raise NotImplemented()
+
+
+class PolynomiallyAnnealedPolicyMixin(object):
+    def __init__(self, eps = 0.1, final_eps = 0.01, episodes_number = 5000, degree = 2, *args, **kwargs):
+        self.init_eps = eps
+        self.final_eps = final_eps
+        self.episodes_number = episodes_number
+        self.degree = degree
+        self.amp = (self.init_eps - self.final_eps) / (self.episodes_number ** self.degree)
+        self.episode_i = 0
+
+        super(PolynomiallyAnnealedPolicyMixin, self).__init__(eps = eps, *args, **kwargs)
+        
+        logger.debug('PolynomiallyAnnealedPolicyMixin: eps=%s' % [(i, self._calc_eps(i)) for i in xrange(0, self.episodes_number, self.episodes_number / 10)])
+
+    def reset(self):
+        self.eps = self.init_eps
+
+    def new_episode(self):
+        #self.eps *= self.decrease_coef
+        self.episode_i += 1
+        self.eps = self._calc_eps(self.episode_i)
+        logger.debug('PolynomiallyAnnealedPolicyMixin: current eps=%f' % self.eps)
+
+    def _calc_eps(self, episode_i):
+        if episode_i <= self.episodes_number:
+            return self.amp * (abs(episode_i - self.episodes_number) ** self.degree) + self.final_eps
+        else:
+            return self.final_eps
 
 
 class EpsilonGreedyPolicy(BaseActionPolicy):
@@ -30,40 +59,38 @@ class EpsilonGreedyPolicy(BaseActionPolicy):
             return action_probabilities.argmax()
 
 
-class AnnealedEpsilonGreedyPolicy(EpsilonGreedyPolicy):
-    def __init__(self, eps = 0.1, final_eps = 0.01, episodes_number = 5000, degree = 2, rand = None):
-        super(AnnealedEpsilonGreedyPolicy, self).__init__(eps, rand = rand)
-        self.init_eps = eps
-        self.final_eps = final_eps
-        self.episodes_number = episodes_number
-        self.degree = degree
-        self.amp = (self.init_eps - self.final_eps) / (self.episodes_number ** self.degree)
-        self.episode_i = 0
+class AnnealedEpsilonGreedyPolicy(PolynomiallyAnnealedPolicyMixin, EpsilonGreedyPolicy):
+    pass
 
-        logger.debug('AnnealedEpsilonGreedyPolicy: eps=%s' % [(i, self._calc_eps(i)) for i in xrange(0, self.episodes_number, self.episodes_number / 10)])
 
-        #self.decrease_coef = (final_eps / self.init_eps) ** (1.0 / episodes_number)
-        #logger.debug('AnnealedEpsilonGreedyPolicy: init_eps=%f decrease_coef=%f' % (self.init_eps, self.decrease_coef))
+def softmax_with_temperature(p, t):
+    p = p / t
+    e_x = numpy.exp(p - numpy.max(p))
+    return e_x / e_x.sum()
 
-    def reset(self):
-        self.eps = self.init_eps
 
-    def new_episode(self):
-        #self.eps *= self.decrease_coef
-        self.episode_i += 1
-        self.eps = self._calc_eps(self.episode_i)
-        logger.debug('AnnealedEpsilonGreedyPolicy: current eps=%f' % self.eps)
+class SoftmaxSamplePolicy(BaseActionPolicy):
+    def __init__(self, eps = 0.7):
+        self.eps = eps
 
-    def _calc_eps(self, episode_i):
-        if episode_i <= self.episodes_number:
-            return self.amp * (abs(episode_i - self.episodes_number) ** self.degree) + self.final_eps
-        else:
-            return self.final_eps
+    def choose_action(self, action_probabilities):
+        action_probabilities = numpy.asarray(action_probabilities).reshape(-1)
+        smoothed_probs = softmax_with_temperature(action_probabilities,
+                                                  self.eps)
+        logger.debug('SoftmaxSamplePolicy: sampling from %s' % ', '.join('%.3f' % p for p in smoothed_probs))
+        return numpy.random.choice(range(action_probabilities.shape[-1]),
+                                   p = smoothed_probs)
+
+
+class AnnealedSoftmaxSamplePolicy(PolynomiallyAnnealedPolicyMixin, SoftmaxSamplePolicy):
+    pass
 
 
 _ACTION_POLICIES = {
     'epsilon_greedy' : EpsilonGreedyPolicy,
     'annealed_epsilon_greedy' : AnnealedEpsilonGreedyPolicy,
+    'softmax_sample' : SoftmaxSamplePolicy,
+    'annealed_softmax_sample' : AnnealedSoftmaxSamplePolicy
 }
 DEFAULT_ACTION_POLICY = 'epsilon_greedy'
 
