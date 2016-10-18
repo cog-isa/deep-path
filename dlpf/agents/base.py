@@ -10,35 +10,9 @@ from dlpf.base_utils import load_object_from_dict
 from dlpf.keras_utils import get_optimizer, choose_samples_per_epoch
 from .policies import get_action_policy, BaseActionPolicy
 
+from .training_data_gen import replay_train_data_generator
 
 logger = logging.getLogger(__name__)
-
-
-def replay_train_data_generator(episodes, batch_size, actions_number, rand = random.Random()):
-    '''
-    Episodes is a list of list of MemoryRecord or compatible type
-    '''
-    if len(episodes) == 0:
-        return
-
-    input_batch = numpy.zeros((batch_size, ) + episodes[0][0].observation.shape,
-                              dtype = 'float32')
-    output_batch = numpy.zeros((batch_size, actions_number),
-                               dtype = 'float32')
-    batch_i = 0
-
-    while True:
-        episode = episodes[rand.randint(0, len(episodes) - 1)]
-        step = episode[rand.randint(0, len(episode) - 1)]
-
-        input_batch[batch_i] = step.observation
-        output_batch[batch_i, step.action] = step.reward
-
-        batch_i += 1
-        if batch_i % batch_size == 0:
-            yield (input_batch, output_batch)
-            output_batch[:] = 0
-            batch_i = 0
 
 
 def split_train_val_replay_gens(episodes, batch_size, actions_number, val_part = 0.1, rand = random.Random()):
@@ -162,7 +136,7 @@ class BaseKerasAgent(object):
                                  nb_val_samples = val_samples_per_epoch,
                                  max_q_size = self.train_gen_queue_size,
                                  nb_worker = self.train_gen_processes_number,
-                                 pickle_safe = True)
+                                 pickle_safe = False)
 
     ##############################################################
     ################# Methods optional to implement ##############
