@@ -29,9 +29,7 @@ class LossHistory(Callback):
         self.epoch_stats = StatHolder()
 
     def on_train_begin(self, logs = {}):
-        self.batch_stats = StatHolder()
         self.batch_stats.new_episode()
-        self.epoch_stats = StatHolder()
         self.epoch_stats.new_episode()
 
     def on_batch_end(self, batch, logs = {}):
