@@ -7,7 +7,7 @@ kwargs:
   convolution_activation: relu
   dropout1: 0.2
   dropout2: 0.2
-  action_policy: {ctor: annealed_epsilon_greedy, eps: 0.9, decrease_coef: 0.9995}
+  action_policy: {ctor: annealed_epsilon_greedy, eps: 0.9, final_eps: 0.01, episodes_number: 5000, degree: 2}
   batch_size: 64
   epoch_number: 20
   loss: mean_squared_error

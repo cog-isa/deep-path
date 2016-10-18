@@ -102,6 +102,7 @@ class BaseKerasAgent(object):
     def new_episode(self):
         self.memory.append([])
         self.memory = self.memory[-self.max_memory_size:]
+        self.action_policy.new_episode()
 
     def act(self, observation, reward = None, done = None):
         action_probabilities = self.model.predict(observation.reshape((1,) + observation.shape))
