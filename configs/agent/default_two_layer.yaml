@@ -3,8 +3,8 @@ kwargs:
   hidden_size: 50
   hidden_activation: relu
   dropout: 0.1
-  action_policy: {ctor: annealed_epsilon_greedy, eps: 0.9, final_eps: 0.1, episodes_number: 5000, degree: 2}
-  batch_size: 32
+  action_policy: {ctor: annealed_softmax_sample, eps: 20, final_eps: 0.1, episodes_number: 5000, degree: 2}
+  batch_size: 64
   epoch_number: 100
   loss: mean_squared_error
   max_memory_size: 250
