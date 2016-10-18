@@ -4,7 +4,7 @@ from scipy.spatial.distance import euclidean
 import keras
 from keras.models import Model
 from keras.layers import Dense, Input
-from keras.callbacks import EarlyStopping
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 
 from dlpf.base_utils import load_object_from_dict
 from dlpf.keras_utils import get_optimizer, choose_samples_per_epoch
@@ -54,7 +54,9 @@ class BaseKerasAgent(object):
                  keras_verbose = 0,
                  train_gen_processes_number = 4,
                  train_gen_queue_size = 100,
-                 early_stopping_patience = 1,
+                 early_stopping_patience = 20,
+                 reduce_lr_on_plateau_factor = 0.2,
+                 reduce_lr_on_plateau_patience = 10,
                  split_rand = random.Random()):
         self.input_shape = input_shape
         self.number_of_actions = number_of_actions
@@ -76,8 +78,15 @@ class BaseKerasAgent(object):
         self.train_gen_processes_number = train_gen_processes_number
         self.train_gen_queue_size = train_gen_queue_size
         self.early_stopping_patience = early_stopping_patience
+        self.reduce_lr_on_plateau_factor = reduce_lr_on_plateau_factor
+        self.reduce_lr_on_plateau_patience = reduce_lr_on_plateau_patience
         self.split_rand = split_rand
 
+        self.model_callbacks.append(ReduceLROnPlateau(monitor = 'val_loss',
+                                                      factor = self.reduce_lr_on_plateau_factor,
+                                                      patience = self.reduce_lr_on_plateau_patience,
+                                                      verbose = self.keras_verbose,
+                                                      mode = 'min'))
         self.model_callbacks.append(EarlyStopping(monitor = 'val_loss',
                                                   patience = self.early_stopping_patience,
                                                   verbose = self.keras_verbose,
