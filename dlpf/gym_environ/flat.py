@@ -13,7 +13,14 @@ class PathFindingByPixelWithDistanceMapEnv(BasePathFindingByPixelEnv):
     def _get_usual_reward(self, new_position):
         old_height = self.distance_map[tuple(self.cur_position_discrete)]
         new_height = self.distance_map[tuple(new_position)]
-        return old_height - new_height
+        true_gain = old_height - new_height
+
+        local_target = self.path_policy.get_local_goal()
+        old_dist = euclidean(self.cur_position_discrete, local_target)
+        new_dist = euclidean(new_position, local_target)
+        greedy_gain = old_dist - new_dist
+
+        return self.greedy_distance_weight * greedy_gain + (1 - self.greedy_distance_weight) * true_gain
 
     def _init_state(self):
         self.distance_map = build_distance_map(numpy.array(self.cur_task.local_map, dtype = numpy.int),
@@ -96,9 +103,11 @@ class PathFindingByPixelWithDistanceMapEnv(BasePathFindingByPixelEnv):
     def _configure(self,
                    vision_range = 10,
                    target_on_border_reward = 5,
+                   greedy_distance_weight = 0.1,
                    *args, **kwargs):
         self.vision_range = vision_range
         self.target_on_border_reward = target_on_border_reward
+        self.greedy_distance_weight = greedy_distance_weight
         super(PathFindingByPixelWithDistanceMapEnv, self)._configure(*args, **kwargs)
 
     def _current_optimal_score(self):
