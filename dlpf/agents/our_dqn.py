@@ -29,34 +29,41 @@ class TwoLayerAgent(BaseKerasAgent):
         return h
 
 
-class OneConvPlusTwoLayerAgent(BaseKerasAgent):
+class ConvAndDenseAgent(BaseKerasAgent):
     def __init__(self,
-                 hidden_size = 10,
-                 hidden_activation = 'relu',
-                 convolution_cores = 10,
-                 convolution_core_size = 4,
-                 convolution_activation = 'relu',
-                 dropout1 = 0.8,
-                 dropout2 = 0.8,
+                 hidden_sizes = [10],
+                 hidden_activations = ['relu'],
+                 hidden_dropouts = [0.2],
+                 conv_cores = [10],
+                 conv_core_sizes = [4],
+                 conv_activations = ['relu'],
+                 conv_dropouts = [0.2],
                  *args, **kwargs):
-        self.convolution_cores = convolution_cores
-        self.convolution_core_size = convolution_core_size
-        self.convolution_activation = convolution_activation
-        self.hidden_size = hidden_size
-        self.hidden_activation = hidden_activation
-        self.dropout1 = dropout1
-        self.dropout2 = dropout2
+        self.hidden_sizes = hidden_sizes
+        self.hidden_activations = hidden_activations
+        self.hidden_dropouts = hidden_dropouts
+        self.conv_cores = conv_cores
+        self.conv_core_sizes = conv_core_sizes
+        self.conv_activations = conv_activations
+        self.conv_dropouts = conv_dropouts
         super(OneConvPlusTwoLayerAgent, self).__init__(*args, **kwargs)
 
     def _build_inner_model(self, input_layer):
-        h = Reshape((1, shape))(input_layer)
-        h = Convolution2D(self.convolution_cores,
-                          self.convolution_core_size, self.convolution_core_size,
-                          input_shape=(1, shape),
-                          activation=self.convolution_activation)(h)
+        h = input_layer
+
+        for cores, core_size, act, dropout in zip(self.conv_cores,
+                                                  self.conv_core_sizes,
+                                                  self.conv_activations,
+                                                  self.conv_dropouts):
+            h = Convolution2D(cores, core_size, core_size, activation = act)(input_layer)
+            h = Dropout(dropout)(h)
         h = Flatten()(h)
-        h = Dropout(self.dropout1)(h)
-        h = Dense(self.hidden_size,
-                  activation = self.hidden_activation)(h)
-        h = Dropout(self.dropout2)(h)
+
+        for size, act, dropout in zip(self.hidden_sizes,
+                                      self.hidden_activations,
+                                      self.hidden_dropouts):
+            h = Dense(size,
+                      activation = act)(h)
+            h = Dropout(dropout)(h)
+
         return h
