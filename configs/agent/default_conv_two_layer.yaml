@@ -1,17 +1,23 @@
-ctor: dlpf.agents.our_dqn.OneConvPlusTwoLayerAgent
+ctor: dlpf.agents.our_dqn.ConvAndDenseAgent
 kwargs:
-  hidden_size: 50
-  hidden_activation: relu
-  convolution_cores: 32
-  convolution_core_size: 16
-  convolution_activation: relu
-  dropout1: 0.2
-  dropout2: 0.2
-  action_policy: {ctor: annealed_epsilon_greedy, eps: 0.9, final_eps: 0.01, episodes_number: 5000, degree: 2}
+  hidden_sizes: 50
+  hidden_activations: relu
+  hidden_dropouts: 0.2
+  conv_cores: 32, 16
+  conv_core_sizes: 8, 4
+  conv_activations: relu, relu
+  conv_dropouts: 0.2, 0.2
+  action_policy: {ctor: annealed_softmax_sample, eps: 20, final_eps: 0.1, episodes_number: 5000, degree: 2}
   batch_size: 64
-  epoch_number: 20
+  epoch_number: 100
   loss: mean_squared_error
   max_memory_size: 250
-  optimizer: {ctor: rmsprop, lr: 0.01}
+  optimizer: {ctor: adadelta}
   passes_over_train_data: 10
   validation_part: 0.1
+  keras_verbose: 2
+  early_stopping_patience: 20
+  train_gen_processes_number: 1
+  train_gen_queue_size: 100
+  reduce_lr_on_plateau_factor: 0.2
+  reduce_lr_on_plateau_patience: 10
