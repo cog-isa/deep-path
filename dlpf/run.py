@@ -31,6 +31,9 @@ def apply_agent(environment,
         for step_i in range(max_steps):
             action = agent.act(observation, reward = reward, done = done)
             observation, reward, done, info = environment.step(action)
+            #print '-'*50 #environment.cur_task.local_map
+            #print observation
+            #print reward, observation[4][4], done
             stat.add_step(reward = reward, info = info)
 
             if not allow_train:

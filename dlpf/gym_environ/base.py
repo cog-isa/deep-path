@@ -58,6 +58,7 @@ class BasePathFindingByPixelEnv(gym.Env):
         done = all(new_position == self.cur_task.finish)
         if done:
             logger.debug('Finished!')
+            print 'FINISHED'
             reward = self._get_done_reward()
             info = InfoValues.DONE
         else:

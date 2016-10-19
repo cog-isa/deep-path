@@ -3,7 +3,8 @@ kwargs:
   action_policy: {ctor: annealed_epsilon_greedy, eps: 0.9, final_eps: 0.01, episodes_number: 5000, degree: 2}
   batch_size: 32
   epoch_number: 100
-  loss: mean_squared_error
+  loss: squared_hinge
+  output_activation: tanh
   max_memory_size: 250
   optimizer: rmsprop
   passes_over_train_data: 2

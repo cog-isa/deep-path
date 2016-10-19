@@ -15,9 +15,9 @@ then
     CMD="nvidia-docker"
 fi
 
-$CMD run -ti --rm \
+sudo $CMD run -ti --rm \
     -e "HASHED_PASSWORD=$YOUR_HASHED_PASSWORD" \
-    -e "SSL=1" \
+    -e "SSL=" \
     -v /home/rsuvorov/projects/docker-jupyter-keras-tools/certs:/jupyter/certs \
     -v `pwd`:/notebook \
     $BIND_PORT \

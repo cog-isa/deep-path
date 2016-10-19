@@ -54,9 +54,14 @@ class PathFindingByPixelWithDistanceMapEnv(BasePathFindingByPixelEnv):
 #             logger.debug((point, viewport_offset))
             result[viewport_offset] = 0
 
-        goal = self.path_policy.get_global_goal()
+        #goal = self.path_policy.get_global_goal()
+        goal = self.cur_task.finish
         if x_from <= goal[1] < x_to and y_from <= goal[0] < y_to:
-            result[goal[0] - y_from, goal[1] - x_from] = self._get_done_reward()
+            result[goal[0] - y_viewport_left_top, goal[1] - x_viewport_left_top] = self._get_done_reward()
+            #cur_y, cur_x = self.cur_position_discrete
+            #goal_y, goal_x = self.cur_task.finish
+            #real_dist = ((cur_y-goal_y)**2+(cur_x-goal_x)**2)**0.5
+            #print 'dst=', real_dist
         else: # find intersection of line <cur_pos, goal> with borders of view range and mark it
             cur_y, cur_x = self.cur_position_discrete
 #             logger.debug('Target out of view range %s, %s' % (self.cur_position_discrete,

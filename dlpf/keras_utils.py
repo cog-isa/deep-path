@@ -72,7 +72,7 @@ def choose_samples_per_epoch(total_samples_number, batch_size, val_part, passes_
 _THEANO_DEVICES_TO_TRY = ['gpu1', 'gpu0']
 _GET_DEVICE=re.compile('device=([^,]+)')
 def try_assign_theano_on_free_gpu():
-    match = _GET_DEVICE.search(os.environ['THEANO_FLAGS'])
+    match = _GET_DEVICE.search(os.environ.get('THEANO_FLAGS', ''))
     if match and match.group(1) == 'cpu':
         return
 

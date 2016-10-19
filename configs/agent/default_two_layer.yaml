@@ -17,4 +17,4 @@ kwargs:
   train_gen_processes_number: 1
   train_gen_queue_size: 100
   reduce_lr_on_plateau_factor: 0.2
-  reduce_lr_on_plateau_patience: 10
+  reduce_lr_on_plateau_patience: 100000
