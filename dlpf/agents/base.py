@@ -95,6 +95,7 @@ class BaseKerasAgent(object):
                                                   mode = 'min'))
 
         self.memory = []
+        self.prev_step_info = None
         
         self._build_model()
 
@@ -114,6 +115,7 @@ class BaseKerasAgent(object):
     def new_episode(self):
         self.memory.append([])
         self.memory = self.memory[-self.max_memory_size:]
+        self.prev_step_info = None
         self.action_policy.new_episode()
 
     def act(self, observation, reward = None, done = None):
@@ -121,12 +123,14 @@ class BaseKerasAgent(object):
         action = self.action_policy.choose_action(action_probabilities)
 
         if not reward is None: # that means that we can learn
-            mem_rec = self._prepare_memory_record(observation,
-                                                  action_probabilities,
-                                                  action,
-                                                  reward,
-                                                  done)
-            self.memory[-1].append(mem_rec)
+            if not self.prev_step_info is None:
+                self.prev_step_info['reward'] = reward
+                self.memory[-1].append(self._prepare_memory_record(**self.prev_step_info))
+            self.prev_step_info = dict(observation = observation,
+                                       action_probabilities = action_probabilities,
+                                       action = action,
+                                       reward = reward,
+                                       done = done)
 
         return action
 
@@ -157,8 +161,10 @@ class BaseKerasAgent(object):
     def plot_layers(self, to_save=''):
         pass
 
-    def _prepare_memory_record(self, observation, action_probabilities, action, reward, done):
-        return MemoryRecord(observation, action, reward)
+    def _prepare_memory_record(self, observation = None, action_probabilities = None, action = None, reward = None, done = None):
+        rec = MemoryRecord(observation, action, reward)
+        # logger.debug('Add memory record\n%s' % repr(rec))
+        return rec
 
     def _gen_train_val_data_from_memory(self):
         '''If we have another self.memory strucutre, then we will need to override this'''
