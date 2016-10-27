@@ -1,4 +1,4 @@
-import logging
+import logging, numpy
 from scipy.spatial.distance import euclidean
 import gym, gym.spaces, gym.utils
 
@@ -17,6 +17,7 @@ DEFAULT_OBSTACLE_PUNISHMENT = 1
 
 class InfoValues:
     OK = 'OK'
+    NOTHING = 'NOTHING'
     DONE = 'DONE'
 
     OBSTACLE = 'OBS'
@@ -55,10 +56,9 @@ class BasePathFindingByPixelEnv(gym.Env):
                                                                tuple(new_position)))
         
         info = InfoValues.OK
-        done = all(new_position == self.cur_task.finish)
+        done = numpy.allclose(new_position, self.path_policy.get_global_goal())
         if done:
-            logger.debug('Finished!')
-            print 'FINISHED'
+            logger.debug('Finished %s %s!' % (new_position, self.path_policy.get_global_goal()))
             reward = self._get_done_reward()
             info = InfoValues.DONE
         else:
@@ -75,7 +75,7 @@ class BasePathFindingByPixelEnv(gym.Env):
                 cur_target_dist = euclidean(new_position, local_target)
                 if cur_target_dist < self.goal_error:
                     reward = self._get_local_goal_reward()
-                    done = self.path_policy.move_to_next_target()
+                    done = self.path_policy.move_to_next_goal()
                 else:
                     reward = self._get_usual_reward(new_position)
 
