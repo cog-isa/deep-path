@@ -23,14 +23,17 @@ def basic_plot(title_data_tuples, out_file = None):
     return fig, ax
 
 
-def basic_plot_from_df(df, out_file = None, need_get_dummies = True):
+def basic_plot_from_df(df, out_file = None, need_get_dummies = True, ignore = ()):
     if need_get_dummies and df.shape[1] > 0:
         df = pandas.get_dummies(df)
+    cols_to_ignore = set(ignore) & set(df.columns)
+    if len(cols_to_ignore) > 0:
+        df.drop(cols_to_ignore, axis = 1, inplace = True)
     return basic_plot(((col, df.index, df[col].values) for col in df.columns),
                       out_file = out_file)
 
 
-def basic_plot_from_df_rolling_mean(df, window = None, smooth_factor = 50.0, out_file = None):
+def basic_plot_from_df_rolling_mean(df, window = None, smooth_factor = 50.0, out_file = None, ignore = ()):
     if df.shape[1] > 0:
         df = pandas.get_dummies(df)
     if window is None:
@@ -38,7 +41,8 @@ def basic_plot_from_df_rolling_mean(df, window = None, smooth_factor = 50.0, out
     df = pandas.rolling_mean(df, window)
     return basic_plot_from_df(df,
                               out_file = out_file,
-                              need_get_dummies = False)
+                              need_get_dummies = False,
+                              ignore = ignore)
 
 
 def basic_plot_via_df(raw_data, out_file = None):

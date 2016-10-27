@@ -19,6 +19,8 @@ logger = logging.getLogger()
 
 STATS_NAMES = 'run epoch batch'.split(' ')
 
+SERIES_NOT_TO_PLOT = frozenset({ 'optimal_score' })
+
 if __name__ == '__main__':
     aparser = argparse.ArgumentParser()
     aparser.add_argument('--env',
@@ -66,13 +68,17 @@ if __name__ == '__main__':
     ensure_dir_exists(args.output)
     for stat_name, stat in zip(STATS_NAMES, stats):
         basic_plot_from_df(stat.episodes,
-                           out_file = os.path.join(args.output, '%s_episodes.png' % stat_name))
+                           out_file = os.path.join(args.output, '%s_episodes.png' % stat_name),
+                           ignore = SERIES_NOT_TO_PLOT)
         basic_plot_from_df_rolling_mean(stat.episodes,
-                                        out_file = os.path.join(args.output, '%s_episodes_smoothed.png' % stat_name))
+                                        out_file = os.path.join(args.output, '%s_episodes_smoothed.png' % stat_name),
+                                        ignore = SERIES_NOT_TO_PLOT)
         basic_plot_from_df(stat.full,
-                           out_file = os.path.join(args.output, '%s_full.png' % stat_name))
+                           out_file = os.path.join(args.output, '%s_full.png' % stat_name),
+                           ignore = SERIES_NOT_TO_PLOT)
         basic_plot_from_df_rolling_mean(stat.full,
-                                        out_file = os.path.join(args.output, '%s_full_smoothed.png' % stat_name))
+                                        out_file = os.path.join(args.output, '%s_full_smoothed.png' % stat_name),
+                                        ignore = SERIES_NOT_TO_PLOT)
 
     create_scores_file(os.path.join(args.output, 'scores.json'),
                        train_score = stats[0].score)
