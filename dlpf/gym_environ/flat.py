@@ -20,7 +20,9 @@ class PathFindingByPixelWithDistanceMapEnv(BasePathFindingByPixelEnv):
         new_dist = euclidean(new_position, local_target)
         greedy_gain = old_dist - new_dist
 
-        return self.greedy_distance_weight * greedy_gain + (1 - self.greedy_distance_weight) * true_gain
+        total_gain = self.greedy_distance_weight * greedy_gain + (1 - self.greedy_distance_weight) * true_gain
+        # logger.debug('true_gain %f, greedy gain %f, total %f' % (true_gain, greedy_gain, total_gain))
+        return total_gain
 
     def _init_state(self):
         self.distance_map = build_distance_map(numpy.array(self.cur_task.local_map, dtype = numpy.int),
@@ -54,8 +56,7 @@ class PathFindingByPixelWithDistanceMapEnv(BasePathFindingByPixelEnv):
 #             logger.debug((point, viewport_offset))
             result[viewport_offset] = 0
 
-        #goal = self.path_policy.get_global_goal()
-        goal = self.cur_task.finish
+        goal = self.path_policy.get_global_goal()
         if x_from <= goal[1] < x_to and y_from <= goal[0] < y_to:
             result[goal[0] - y_viewport_left_top, goal[1] - x_viewport_left_top] = self._get_done_reward()
             #cur_y, cur_x = self.cur_position_discrete
