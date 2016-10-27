@@ -1,6 +1,6 @@
 import logging
 from .stats import StatHolder
-
+from .gym_environ.base import InfoValues
 
 logger = logging.getLogger(__name__)
 
@@ -18,13 +18,15 @@ def apply_agent(environment,
                                                                                            max_steps,
                                                                                            'with' if allow_train else 'without'))
     stat = StatHolder()
-    
+    prev_result = InfoValues.NOTHING
+
     for episode_i in xrange(episodes_number):
         logger.info('Start episode %d' % episode_i)
 
         observation = environment.reset()
         agent.new_episode()
-        stat.new_episode(optimal_score = environment.current_optimal_score())
+        stat.new_episode(optimal_score = environment.current_optimal_score(),
+                         prev_result = prev_result)
 
         reward, done = (initial_reward, False) if allow_train else (None, None)
 
@@ -38,8 +40,12 @@ def apply_agent(environment,
 
             if not allow_train:
                 reward, done = (None, None)
+
             if done:
+                agent.act(observation, reward = reward, done = done)
                 break
+
+        prev_result = InfoValues.DONE if done else InfoValues.NOTHING
 
         if allow_train and (episode_i + 1) % train_each_episodes == 0:
             agent.train_on_memory()
