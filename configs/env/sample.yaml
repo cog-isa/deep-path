@@ -12,3 +12,4 @@ kwargs:
   task_policy: sequential
   vision_range: 4
   greedy_distance_weight: 0.1
+  absolute_distance_weight: 0.1

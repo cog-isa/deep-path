@@ -20,8 +20,16 @@ class PathFindingByPixelWithDistanceMapEnv(BasePathFindingByPixelEnv):
         new_dist = euclidean(new_position, local_target)
         greedy_gain = old_dist - new_dist
 
-        total_gain = self.greedy_distance_weight * greedy_gain + (1 - self.greedy_distance_weight) * true_gain
-        # logger.debug('true_gain %f, greedy gain %f, total %f' % (true_gain, greedy_gain, total_gain))
+        start_height = self.distance_map[tuple(self.path_policy.get_start_position())]
+        abs_gain = numpy.exp(-new_height / start_height)
+
+        total_gain = sum(((1 - self.greedy_distance_weight - self.absolute_distance_weight) * true_gain,
+                          self.greedy_distance_weight * greedy_gain,
+                          self.absolute_distance_weight * abs_gain))
+        logger.debug('true_gain %f, greedy gain %f, abs_gain %f, total %f' % (true_gain,
+                                                                              greedy_gain,
+                                                                              abs_gain,
+                                                                              total_gain))
         return total_gain
 
     def _init_state(self):
@@ -97,7 +105,10 @@ class PathFindingByPixelWithDistanceMapEnv(BasePathFindingByPixelEnv):
                     best_dist = cur_dist
                     inter_point = cur_inter_point
 
-            result[inter_point[0] - y_viewport_left_top, inter_point[1] - x_viewport_left_top] = self.target_on_border_reward
+            abs_dist_normed = numpy.exp(-best_dist / euclidean(self.path_policy.get_start_position(), goal))
+            abs_distance_reward = self.absolute_distance_weight * (self._get_done_reward() - self.target_on_border_reward) * abs_dist_normed
+
+            result[inter_point[0] - y_viewport_left_top, inter_point[1] - x_viewport_left_top] = self.target_on_border_reward + abs_distance_reward
 #         logger.debug('Viewport:\n%s' % result)
         return result
 
@@ -110,10 +121,12 @@ class PathFindingByPixelWithDistanceMapEnv(BasePathFindingByPixelEnv):
                    vision_range = 10,
                    target_on_border_reward = 5,
                    greedy_distance_weight = 0.1,
+                   absolute_distance_weight = 0.1,
                    *args, **kwargs):
         self.vision_range = vision_range
         self.target_on_border_reward = target_on_border_reward
         self.greedy_distance_weight = greedy_distance_weight
+        self.absolute_distance_weight = absolute_distance_weight
         super(PathFindingByPixelWithDistanceMapEnv, self)._configure(*args, **kwargs)
 
     def _current_optimal_score(self):
