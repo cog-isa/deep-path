@@ -44,10 +44,20 @@ if __name__ == '__main__':
                          choices = LOGGING_LEVELS.keys(),
                          default = 'info',
                          help = 'Logging verbosity')
+    aparser.add_argument('--_id',
+                         type = str,
+                         default = None,
+                         help = 'FGLab experiment id')
 
     args = aparser.parse_args()
 
-    logger = init_log(stderr = True, level = LOGGING_LEVELS[args.level])
+    if args._id:
+        args.output = os.path.join(args.output, args._id)
+    ensure_dir_exists(args.output)
+
+    logger = init_log(stderr = True,
+                      level = LOGGING_LEVELS[args.level],
+                      out_file = os.path.join(args.output, 'run_agent.log'))
 
     try_assign_theano_on_free_gpu()
 
@@ -65,7 +75,6 @@ if __name__ == '__main__':
              aggregate_application_base_stats([keras_hist.epoch_stats]),
              aggregate_application_base_stats([keras_hist.batch_stats]))
 
-    ensure_dir_exists(args.output)
     for stat_name, stat in zip(STATS_NAMES, stats):
         basic_plot_from_df(stat.episodes,
                            out_file = os.path.join(args.output, '%s_episodes.png' % stat_name),
