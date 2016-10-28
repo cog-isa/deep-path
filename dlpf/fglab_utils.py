@@ -21,13 +21,13 @@ def create_charts_file(out_file, **charts_source):
             cur_x_name = '%s_x' % chart_title
             column_names.append(cur_x_name)
             columns.append(list(chart_data.index))
-            
+
             for col in chart_data.columns:
                 cur_y_name = '%s_%s' % (chart_title, col)
                 column_names.append(cur_y_name)
-                columns.append(list(chart_data[col]))
+                columns.append(map(float, chart_data[col]))
                 xs[cur_y_name] = cur_x_name
-        
+
         c3_config = {'columnNames' : column_names,
                      'data' : {'xs' : xs,
                                'columns' : columns},
