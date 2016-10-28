@@ -111,6 +111,7 @@ class BaseKerasAgent(object):
         self.model.compile(self.optimizer,
                            loss = self.loss,
                            metrics = self.model_metrics)
+        self.model.summary()
 
     def new_episode(self):
         self.memory.append([])
