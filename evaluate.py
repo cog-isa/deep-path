@@ -2,6 +2,8 @@
 
 import argparse, logging, os
 
+os.environ['KERAS_BACKEND'] = 'theano'
+
 from dlpf.base_utils import init_log, LOGGING_LEVELS, ensure_dir_exists, \
     copy_yaml_configs_to_json
 from dlpf.benchmark import evaluate_agent_with_configs
