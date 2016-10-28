@@ -2,8 +2,8 @@ import itertools, numpy, logging
 import gym.spaces
 from scipy.spatial.distance import euclidean
 from .base import BasePathFindingByPixelEnv
-from .utils import line_intersection
-from .utils_compiled import build_distance_map
+# from .utils import line_intersection
+from .utils_compiled import build_distance_map, get_flat_state
 
 
 logger = logging.getLogger(__name__)
@@ -37,6 +37,17 @@ class PathFindingByPixelWithDistanceMapEnv(BasePathFindingByPixelEnv):
                                                numpy.array(self.path_policy.get_global_goal(), dtype = numpy.int))
         return self._get_state()
 
+    def _get_state(self):
+        return get_flat_state(self.cur_task.local_map,
+                              tuple(self.cur_position_discrete),
+                              self.vision_range,
+                              self._get_done_reward(),
+                              self.target_on_border_reward,
+                              self.path_policy.get_start_position(),
+                              self.path_policy.get_global_goal(),
+                              self.absolute_distance_weight)
+
+    '''
     def _get_state(self):
         result = numpy.ones((2 * self.vision_range + 1,
                              2 * self.vision_range + 1))
@@ -111,6 +122,7 @@ class PathFindingByPixelWithDistanceMapEnv(BasePathFindingByPixelEnv):
             result[inter_point[0] - y_viewport_left_top, inter_point[1] - x_viewport_left_top] = self.target_on_border_reward + abs_distance_reward
 #         logger.debug('Viewport:\n%s' % result)
         return result
+    '''
 
     def _get_observation_space(self, map_shape):
         return gym.spaces.Box(low = 0,
