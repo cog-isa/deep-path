@@ -1,0 +1,14 @@
+{
+  "env": {
+    "type": "string",
+    "default": "configs/env/sample.yaml"
+  },
+  "agent": {
+    "type": "string",
+    "default": "configs/agent/sample.yaml"
+  },
+  "apply": {
+    "type": "string",
+    "default": "configs/apply/sample.yaml"
+  }
+}
