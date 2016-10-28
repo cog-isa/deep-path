@@ -13,7 +13,7 @@ kwargs:
   passes_over_train_data: 10
   validation_part: 0.1
   keras_verbose: 2
-  early_stopping_patience: 20
+  early_stopping_patience: 3
   train_gen_processes_number: 1
   train_gen_queue_size: 100
   reduce_lr_on_plateau_factor: 0.2
