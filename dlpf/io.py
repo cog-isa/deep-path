@@ -91,6 +91,11 @@ def import_tasks_from_xml_to_compact(in_dir, out_dir, maps_subdir = 'maps', path
     logger.info('Imported tasks from %s to %s' % (in_dir, out_dir))
 
 
+def load_map_from_compact(fname):
+    with numpy.load(fname) as f:
+        return f['arr_0']
+
+
 class TaskSet(object):
     def __init__(self, paths_dir, maps_dir):
         self.paths_dir = paths_dir
@@ -106,9 +111,8 @@ class TaskSet(object):
 
         local_map = self.maps_cache.get(task.map_id)
         if local_map is None:
-            with numpy.load(os.path.join(self.map_dir, task.map_id + COMPACT_MAP_EXT)) as f:
-                local_map = f['arr_0']
-                self.maps_cache[task.map_id] = local_map
+            local_map = load_map_from_compact(os.path.join(self.map_dir, task.map_id + COMPACT_MAP_EXT))
+            self.maps_cache[task.map_id] = local_map
 
         return PathFindingTask(task_name,
                                local_map,
