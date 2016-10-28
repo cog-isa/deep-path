@@ -5,7 +5,7 @@ import argparse, logging, os
 from dlpf.base_utils import init_log, LOGGING_LEVELS, ensure_dir_exists, \
     copy_yaml_configs_to_json
 from dlpf.benchmark import evaluate_agent_with_configs
-from dlpf.plot_utils import basic_plot_from_df
+from dlpf.plot_utils import basic_plot_from_df, basic_plot_from_df_rolling_mean
 from dlpf.fglab_utils import create_scores_file, create_charts_file
 from dlpf.keras_utils import try_assign_theano_on_free_gpu
 from dlpf.perf_utils import Profiler
@@ -53,13 +53,13 @@ if __name__ == '__main__':
                            out_file = os.path.join(args.output, '%s_episodes.png' % stat_title),
                            ignore = SERIES_NOT_TO_PLOT)
         basic_plot_from_df_rolling_mean(stat.episodes,
-                                        out_file = os.path.join(args.output, '%s_episodes_smoothed.png' % stat_name),
+                                        out_file = os.path.join(args.output, '%s_episodes_smoothed.png' % stat_title),
                                         ignore = SERIES_NOT_TO_PLOT)
         basic_plot_from_df(stat.full,
                            out_file = os.path.join(args.output, '%s_full.png' % stat_title),
                            ignore = SERIES_NOT_TO_PLOT)
         basic_plot_from_df_rolling_mean(stat.full,
-                                        out_file = os.path.join(args.output, '%s_full_smoothed.png' % stat_name),
+                                        out_file = os.path.join(args.output, '%s_full_smoothed.png' % stat_title),
                                         ignore = SERIES_NOT_TO_PLOT)
 
     create_scores_file(os.path.join(args.output, 'scores.json'),
