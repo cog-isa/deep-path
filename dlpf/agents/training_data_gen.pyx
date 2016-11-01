@@ -28,8 +28,36 @@ def threadsafe_generator(f): #
 
 ctypedef numpy.float_t FLOAT_T
 
+
+def assign_outputs_free_hinge(numpy.ndarray[numpy.float32_t, ndim=1] result, int action, float reward):
+    result[action] = reward
+
+
+def assign_outputs_tanh_hinge(numpy.ndarray[numpy.float32_t, ndim=1] result, int action, float reward):
+    result[action] = max(-1, min(reward, 1))
+
+
+def softmax(numpy.ndarray[numpy.float32_t, ndim=1] p):
+    e = numpy.exp(p - p.max())
+    return e / e.sum()
+
+
+def assign_outputs_softmax(numpy.ndarray[numpy.float32_t, ndim=1] result, int action, float reward):
+    cdef numpy.ndarray[numpy.float32_t, ndim=1] p = numpy.zeros((result.shape[0],), dtype = 'float32')
+    p[action] = reward
+    result[:] = softmax(p)
+
+
+_OUTPUT_TYPES = {
+    'free_hinge' : assign_outputs_free_hinge,
+    'tanh_hinge' : assign_outputs_tanh_hinge,
+    'softmax' : assign_outputs_softmax
+}
+
+
 @threadsafe_generator #
-def replay_train_data_generator(list episodes, int batch_size, int actions_number, rand):
+def replay_train_data_generator(list episodes, int batch_size, int actions_number, str output_type_name, rand):
+    assert output_type_name in _OUTPUT_TYPES, 'Unknown output type %s' % output_type_name
     if len(episodes) == 0:
         return
 
@@ -39,12 +67,13 @@ def replay_train_data_generator(list episodes, int batch_size, int actions_numbe
                                dtype = 'float32')
     cdef int batch_i = 0
 
+    output_assigner = _OUTPUT_TYPES[output_type_name]
     while True:
         episode = episodes[rand.randint(0, len(episodes) - 1)]
         step = episode[rand.randint(0, len(episode) - 1)]
 
         input_batch[batch_i] = step.observation
-        output_batch[batch_i, step.action] = step.reward
+        output_assigner(output_batch[batch_i], step.action, step.reward)
 
         batch_i += 1
         if batch_i % batch_size == 0:

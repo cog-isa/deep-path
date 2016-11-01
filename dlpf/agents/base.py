@@ -15,7 +15,7 @@ from .training_data_gen import replay_train_data_generator
 logger = logging.getLogger(__name__)
 
 
-def split_train_val_replay_gens(episodes, batch_size, actions_number, val_part = 0.1, rand = random.Random()):
+def split_train_val_replay_gens(episodes, batch_size, actions_number, val_part = 0.1, output_type = 'free_hinge', rand = random.Random()):
     indices = range(len(episodes))
     rand.shuffle(indices)
 
@@ -26,10 +26,12 @@ def split_train_val_replay_gens(episodes, batch_size, actions_number, val_part =
     return (replay_train_data_generator([episodes[i] for i in train_indices],
                                         batch_size,
                                         actions_number,
+                                        output_type,
                                         rand = rand),
             replay_train_data_generator([episodes[i] for i in val_indices],
                                         batch_size,
                                         actions_number,
+                                        output_type,
                                         rand = rand))
 
 
@@ -58,6 +60,7 @@ class BaseKerasAgent(object):
                  early_stopping_patience = 20,
                  reduce_lr_on_plateau_factor = 0.2,
                  reduce_lr_on_plateau_patience = 10,
+                 train_data_output_type = 'free_hinge',
                  split_rand = random.Random()):
         self.input_shape = input_shape
         self.number_of_actions = number_of_actions
@@ -82,6 +85,7 @@ class BaseKerasAgent(object):
         self.early_stopping_patience = early_stopping_patience
         self.reduce_lr_on_plateau_factor = reduce_lr_on_plateau_factor
         self.reduce_lr_on_plateau_patience = reduce_lr_on_plateau_patience
+        self.train_data_output_type = train_data_output_type
         self.split_rand = split_rand
 
         self.model_callbacks.append(ReduceLROnPlateau(monitor = 'val_loss',
@@ -172,7 +176,8 @@ class BaseKerasAgent(object):
         return split_train_val_replay_gens(self.memory,
                                            self.batch_size,
                                            self.number_of_actions,
-                                           self.validation_part,
+                                           val_part = self.validation_part,
+                                           output_type = self.train_data_output_type,
                                            rand = self.split_rand)
 
     ##############################################################
