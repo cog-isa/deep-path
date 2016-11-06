@@ -29,8 +29,13 @@ def basic_plot_from_df(df, out_file = None, need_get_dummies = True, ignore = ()
     cols_to_ignore = set(ignore) & set(df.columns)
     if len(cols_to_ignore) > 0:
         df.drop(cols_to_ignore, axis = 1, inplace = True)
-    return basic_plot(((col, df.index, df[col].values) for col in df.columns),
-                      out_file = out_file)
+
+    while df.shape[0] > 0:
+        try:
+            return basic_plot(((col, df.index, df[col].values) for col in df.columns),
+                              out_file = out_file)
+        except:
+            df = df.sample(frac = 0.8)
 
 
 def basic_plot_from_df_rolling_mean(df, window = None, smooth_factor = 50.0, out_file = None, ignore = ()):
