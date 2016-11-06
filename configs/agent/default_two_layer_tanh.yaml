@@ -3,11 +3,11 @@ kwargs:
   hidden_size: 50
   hidden_activation: relu
   dropout: 0.1
-  output_activation: softmax
-  action_policy: {ctor: annealed_epsilon_greedy, eps: 0.9, final_eps: 0.1, episodes_number: 10000, degree: 2}
+  output_activation: tanh
+  action_policy: {ctor: annealed_epsilon_greedy, eps: 0.9, final_eps: 0.1, episodes_number: 5000, degree: 2}
   batch_size: 64
   epoch_number: 100
-  loss: binary_crossentropy
+  loss: hinge
   max_memory_size: 40
   optimizer: {ctor: adadelta}
   passes_over_train_data: 100
@@ -18,4 +18,4 @@ kwargs:
   train_gen_queue_size: 100
   reduce_lr_on_plateau_factor: 0.2
   reduce_lr_on_plateau_patience: 100000
-  train_data_output_type: softmax
+  train_data_output_type: tanh_hinge

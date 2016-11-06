@@ -13,3 +13,4 @@ kwargs:
   early_stopping_patience: 1
   train_gen_processes_number: 1
   train_gen_queue_size: 100
+  train_data_output_type: free_hinge

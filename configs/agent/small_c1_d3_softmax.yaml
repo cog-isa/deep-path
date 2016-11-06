@@ -1,8 +1,29 @@
-ctor: dlpf.agents.our_dqn.TwoLayerAgent
+ctor: dlpf.agents.our_dqn.ConvAndDenseAgent
 kwargs:
-  hidden_size: 50
-  hidden_activation: relu
-  dropout: 0.1
+  hidden_sizes:
+    - 50
+    - 50
+    - 50
+  hidden_activations:
+    - tanh
+    - tanh
+    - tanh
+  hidden_dropouts:
+    - 0.5
+    - 0.5
+    - 0.5
+  conv_cores:
+    - 32
+  conv_core_sizes:
+    - 3
+  conv_strides:
+    - 1
+  conv_activations:
+    - sigmoid
+  conv_dropouts:
+    - 0
+  conv_pooling:
+    - None
   output_activation: softmax
   action_policy: {ctor: annealed_epsilon_greedy, eps: 0.9, final_eps: 0.1, episodes_number: 10000, degree: 2}
   batch_size: 64

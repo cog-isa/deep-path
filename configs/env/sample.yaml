@@ -5,7 +5,7 @@ kwargs:
   map_shape: !!python/tuple [10, 10]
   tasks_dir: data/sample/imported/paths
   maps_dir: data/sample/imported/maps
-  obstacle_punishment: 1
+  obstacle_punishment: 4
   path_policy: random_start_and_finish_straight
   stop_game_after_invalid_action: false
   target_on_border_reward: 5
