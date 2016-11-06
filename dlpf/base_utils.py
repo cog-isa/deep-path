@@ -132,6 +132,10 @@ def copy_and_update(d, **updates):
     return d
 
 
+def rename_and_update(d, key_format, **updates):
+    d.update((key_format % k, v) for k, v in updates.viewitems())
+
+
 def copy_except(src, fields_to_skip):
     return { k : v for k, v in src.viewitems() if not k in fields_to_skip}
 

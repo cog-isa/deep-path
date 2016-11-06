@@ -160,6 +160,9 @@ class BaseKerasAgent(object):
                                  nb_worker = self.train_gen_processes_number,
                                  pickle_safe = False)
 
+    def get_episode_stat(self):
+        return {}
+
     ##############################################################
     ################# Methods optional to implement ##############
     ##############################################################

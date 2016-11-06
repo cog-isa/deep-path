@@ -1,4 +1,5 @@
 import logging
+from .base_utils import rename_and_update
 from .stats import StatHolder
 from .gym_environ.base import InfoValues
 
@@ -23,10 +24,14 @@ def apply_agent(environment,
     for episode_i in xrange(episodes_number):
         logger.info('Start episode %d' % episode_i)
 
+        new_episode_info = dict(optimal_score = environment.current_optimal_score(),
+                                prev_result = prev_result)
+        rename_and_update(new_episode_info, 'env %s', **environment.get_episode_stat())
+        rename_and_update(new_episode_info, 'agent %s', **agent.get_episode_stat())
+        stat.new_episode(new_episode_info)
+
         observation = environment.reset()
         agent.new_episode()
-        stat.new_episode(optimal_score = environment.current_optimal_score(),
-                         prev_result = prev_result)
 
         reward, done = (initial_reward, False) if allow_train else (None, None)
 

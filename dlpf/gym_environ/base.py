@@ -46,6 +46,9 @@ class BasePathFindingByPixelEnv(gym.Env):
     def current_optimal_score(self):
         return self._current_optimal_score()
 
+    def get_episode_stat(self):
+        return {}
+
     ####################################################
     ######## Default environment implementation ########
     ####################################################
