@@ -34,7 +34,7 @@ def assign_outputs_free_hinge(numpy.ndarray[numpy.float32_t, ndim=1] result, int
 
 
 def assign_outputs_tanh_hinge(numpy.ndarray[numpy.float32_t, ndim=1] result, int action, float reward):
-    result[action] = max(-1, min(reward, 1))
+    result[action] = numpy.tanh(reward)
 
 
 def softmax(numpy.ndarray[numpy.float32_t, ndim=1] p):
