@@ -1,4 +1,4 @@
-import collections, pandas, itertools
+import collections, pandas, itertools, numpy
 
 from .base_utils import no_copy_update
 
@@ -44,4 +44,5 @@ def aggregate_application_run_stats(stats_lst):
                                                                       / float(ep.info['optimal_score'])) )
                                               for stat in stats_lst
                                               for ep in stat.episodes_data])
-    return RunStats(episodes_stats['score'].mean(), episodes_stats, full_step_stats)
+    score = episodes_stats['score'].replace([numpy.inf, -numpy.inf], numpy.nan).dropna().mean()
+    return RunStats(score, episodes_stats, full_step_stats)
