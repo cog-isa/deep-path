@@ -142,4 +142,7 @@ class PathFindingByPixelWithDistanceMapEnv(BasePathFindingByPixelEnv):
         super(PathFindingByPixelWithDistanceMapEnv, self)._configure(*args, **kwargs)
 
     def _current_optimal_score(self):
+        dm = getattr(self, 'distance_map', None)
+        if dm is None:
+            return 0
         return self.distance_map[self.path_policy.get_start_position()] + self._get_done_reward()
