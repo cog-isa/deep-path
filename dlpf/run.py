@@ -28,7 +28,7 @@ def apply_agent(environment,
                                 prev_result = prev_result)
         rename_and_update(new_episode_info, 'env %s', **environment.get_episode_stat())
         rename_and_update(new_episode_info, 'agent %s', **agent.get_episode_stat())
-        stat.new_episode(new_episode_info)
+        stat.new_episode(**new_episode_info)
 
         observation = environment.reset()
         agent.new_episode()
