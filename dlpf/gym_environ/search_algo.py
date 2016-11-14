@@ -14,7 +14,8 @@ class BaseSearchAlgo(object):
         self.start = start
         self.finish = finish
 
-        self.queue = [(self.start, 0)]
+        self.queue = [self.start]
+        self.ratings = { self.start : 0 }
         self.backrefs = { self.start : self.start }
 
     def walk_to_finish(self):
@@ -22,17 +23,26 @@ class BaseSearchAlgo(object):
             pass
 
     def step(self):
-        if self.goal_achieved() or len(self.queue) == 0:
+        if self.goal_achieved():
             return False
 
-        best_next, _ = self.queue.pop()
+        while len(self.queue) > 0:
+            self._reorder_queue()
+            best_next, _ = self.queue.pop()
 
-        new_variants = self._gen_new_variants(best_next)
-        self.queue.extend(new_variants)
-        self._reorder_queue()
+            new_variants_with_ratings = self._gen_new_variants(best_next)
+            if len(new_variants_with_ratings) == 0:
+                continue
 
-        self.backrefs.update((new_point, best_next) for new_point, _ in new_variants)
-        return True
+            self.queue.extend(p for p, _ in new_variants_with_ratings)
+            self.ratings.update(new_variants_with_ratings)
+            self.backrefs.update((new_point, best_next) for new_point, _ in new_variants)
+            return best_next, new_variants
+
+        return False
+
+    def update_ratings(self, **updates):
+        self.ratings.update(updates)
 
     def goal_achieved(self):
         return self.finish in self.backrefs
@@ -49,7 +59,7 @@ class BaseSearchAlgo(object):
         return result
 
     def _reorder_queue(self):
-        self.queue.sort(key = lambda el: el[-1])
+        self.queue.sort(key = self.ratings.__getitem__)
 
     def _gen_new_variants(self, pos):
         '''Proceed from the given state.
@@ -70,3 +80,19 @@ class EuclideanAStar(BaseSearchAlgo):
                     and (0 <= point[0] < self.local_map.shape[0])
                     and (0 <= point[1] < self.local_map.shape[1])
                     and (self.local_map[point] == 0)]
+
+
+_SEARCH_ALGOS = {
+    'astar' : EuclideanAStar
+}
+
+
+def get_available_search_algos():
+    return list(_SEARCH_ALGOS.keys())
+
+
+DEFAULT_SEARCH_ALGO = 'astar'
+
+def get_search_algo(name = DEFAULT_SEARCH_ALGO, *args, **kwargs):
+    assert name in _SEARCH_ALGOS, "Unknown search algo %s" % name
+    return _SEARCH_ALGOS[name](*args, **kwargs)

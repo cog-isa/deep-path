@@ -27,7 +27,7 @@ class InfoValues:
     BAD = frozenset({ OK, DONE })
 
 
-class BasePathFindingByPixelEnv(gym.Env):
+class BasePathFindingEnv(gym.Env):
     action_space = gym.spaces.Discrete(len(BY_PIXEL_ACTIONS))
 
     def __init__(self):
@@ -36,18 +36,102 @@ class BasePathFindingByPixelEnv(gym.Env):
         self.task_policy = None
         self.path_policy = None
         self.observation_space = None
-        self.cur_position_discrete = None
-        self.goal_error = None
         self.obstacle_punishment = None
         self.local_goal_reward = None
         self.done_reward = None
-        self.stop_game_after_invalid_action = None
 
     def current_optimal_score(self):
         return self._current_optimal_score()
 
     def get_episode_stat(self):
         return {}
+
+    ####################################################
+    ######## Default environment implementation ########
+    ####################################################
+    def _reset(self):
+        logger.info('Reset environment %s' % self.__class__.__name__)
+
+        self.cur_task = self.task_policy.choose_next_task()
+        self.path_policy.reset(self.cur_task)
+
+        logger.info('Environment %s has been reset' % self.__class__.__name__)
+        return self._init_state()
+
+    def _configure(self,
+                   tasks_dir = 'data/samples/imported/tasks',
+                   maps_dir = 'data/samples/imported/maps',
+                   map_shape = (501, 501),
+                   path_policy = DEFAULT_PATH_POLICY,
+                   task_policy = DEFAULT_TASK_POLICY,
+                   obstacle_punishment = DEFAULT_OBSTACLE_PUNISHMENT,
+                   local_goal_reward = DEFAULT_GOAL_REWARD,
+                   done_reward = DEFAULT_DONE_REWARD):
+        self.observation_space = self._get_observation_space(map_shape)
+        self.task_set = TaskSet(tasks_dir, maps_dir)
+        self.task_policy = get_task_policy(task_policy)
+        self.task_policy.reset(self.task_set)
+        self.path_policy = get_path_policy(path_policy)
+
+        self.obstacle_punishment = abs(obstacle_punishment)
+        self.local_goal_reward = local_goal_reward
+        self.done_reward = done_reward
+        self.stop_game_after_invalid_action = stop_game_after_invalid_action
+
+    def _seed(self, seed = None):
+        self.np_random, seed1 = gym.utils.seeding.np_random(seed)
+        return [seed1]
+
+    def _check_out_of_field(self, position):
+        return any(position < 0) or any(position + 1 > self.cur_task.local_map.shape)
+
+    def _goes_to_obstacle(self, position):
+        return self.cur_task.local_map[tuple(position)] > 0
+
+    ####################################################
+    ########### Methods optional to implement ##########
+    ####################################################
+    def _get_obstacle_punishment(self):
+        return -self.obstacle_punishment
+
+    def _get_local_goal_reward(self):
+        return self.local_goal_reward
+
+    def _get_done_reward(self):
+        return self.done_reward
+
+    def _init_state(self):
+        return self._get_state()
+
+    def _render(self, mode = 'human', close = False):
+        pass
+
+    ####################################################
+    ########## Methods mandatory to implement ##########
+    ####################################################
+    def _step(self, action):
+        raise NotImplemented()
+
+    def _get_usual_reward(self, old_position, new_position):
+        raise NotImplemented()
+
+    def _get_state(self):
+        raise NotImplemented()
+
+    def _get_observation_space(self, map_shape):
+        raise NotImplemented()
+    
+    def _current_optimal_score(self):
+        raise NotImplemented()
+
+
+class BasePathFindingByPixelEnv(BasePathFindingEnv):
+    action_space = gym.spaces.Discrete(len(BY_PIXEL_ACTIONS))
+
+    def __init__(self):
+        super(BasePathFindingByPixelEnv, self).__init__()
+        self.cur_position_discrete = None
+        self.goal_error = None
 
     ####################################################
     ######## Default environment implementation ########
@@ -80,7 +164,7 @@ class BasePathFindingByPixelEnv(gym.Env):
                     reward = self._get_local_goal_reward()
                     done = self.path_policy.move_to_next_goal()
                 else:
-                    reward = self._get_usual_reward(new_position)
+                    reward = self._get_usual_reward(self.cur_position_discrete, new_position)
 
                 logger.debug('Cur target dist is %s' % cur_target_dist)
 
@@ -90,84 +174,21 @@ class BasePathFindingByPixelEnv(gym.Env):
         return self._get_state(), reward, done, info
 
     def _reset(self):
-        logger.info('Reset environment %s' % self.__class__.__name__)
-
-        self.cur_task = self.task_policy.choose_next_task()
-        self.path_policy.reset(self.cur_task)
-
+        result = super(BasePathFindingByPixelEnv, self)._reset()
         self.cur_position_discrete = self.path_policy.get_start_position()
-
-        logger.info('Environment %s has been reset' % self.__class__.__name__)
         return self._init_state()
 
     def _configure(self,
-                   tasks_dir = 'data/samples/imported/tasks',
-                   maps_dir = 'data/samples/imported/maps',
-                   map_shape = (501, 501),
                    goal_error = 1,
-                   path_policy = DEFAULT_PATH_POLICY,
-                   task_policy = DEFAULT_TASK_POLICY,
-                   obstacle_punishment = DEFAULT_OBSTACLE_PUNISHMENT,
-                   local_goal_reward = DEFAULT_GOAL_REWARD,
-                   done_reward = DEFAULT_DONE_REWARD,
-                   stop_game_after_invalid_action = False):
-        self.observation_space = self._get_observation_space(map_shape)
-        self.task_set = TaskSet(tasks_dir, maps_dir)
-        self.task_policy = get_task_policy(task_policy)
-        self.task_policy.reset(self.task_set)
-        self.path_policy = get_path_policy(path_policy)
-
+                   *args, **kwargs):
+        super(BasePathFindingByPixelEnv, self)._configure(*args, **kwargs)
         self.goal_error = goal_error
-        self.obstacle_punishment = abs(obstacle_punishment)
-        self.local_goal_reward = local_goal_reward
-        self.done_reward = done_reward
-        self.stop_game_after_invalid_action = stop_game_after_invalid_action
-
-    def _seed(self, seed = None):
-        self.np_random, seed1 = gym.utils.seeding.np_random(seed)
-        return [seed1]
-
-    def _check_out_of_field(self, position):
-        return any(position < 0) or any(position + 1 > self.cur_task.local_map.shape)
-
-    def _goes_to_obstacle(self, position):
-        return self.cur_task.local_map[tuple(position)] > 0
 
     ####################################################
     ########### Methods optional to implement ##########
     ####################################################
-    def _get_obstacle_punishment(self):
-        return -self.obstacle_punishment
-
-    def _get_local_goal_reward(self):
-        return self.local_goal_reward
-
-    def _get_done_reward(self):
-        return self.done_reward
-
     def _update_cur_position(self, action):
         return self.cur_position_discrete + BY_PIXEL_ACTION_DIFFS[action]
-
-    def _render(self, mode = 'human', close = False):
-        pass
-
-    ####################################################
-    ########## Methods mandatory to implement ##########
-    ####################################################
-    def _get_usual_reward(self, new_position):
-        raise NotImplemented()
-
-    def _init_state(self):
-        raise NotImplemented()
-
-    def _get_state(self):
-        raise NotImplemented()
-
-    def _get_observation_space(self, map_shape):
-        raise NotImplemented()
-    
-    def _current_optimal_score(self):
-        raise NotImplemented()
 
 
 def load_environment_from_yaml(fname, **kwargs_override):

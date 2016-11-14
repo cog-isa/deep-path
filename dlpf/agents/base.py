@@ -36,7 +36,7 @@ def split_train_val_replay_gens(episodes, batch_size, actions_number, val_part =
 
 
 MemoryRecord = collections.namedtuple('MemoryRecord',
-                                      'observation action reward')
+                                      'observation action reward done')
 
 
 class BaseKerasAgent(object):
@@ -118,19 +118,19 @@ class BaseKerasAgent(object):
         self.model.summary()
 
     def new_episode(self):
-        self.memory.append([])
+        self.memory.append(self._init_memory_for_new_episode())
         self.memory = self.memory[-self.max_memory_size:]
         self.prev_step_info = None
         self.action_policy.new_episode()
 
     def act(self, observation, reward = None, done = None):
-        action_probabilities = self.model.predict(observation.reshape((1,) + observation.shape))
+        action_probabilities = self._predict_action_probabilities(observation)
         action = self.action_policy.choose_action(action_probabilities)
 
         if not reward is None: # that means that we can learn
             if not self.prev_step_info is None:
                 self.prev_step_info['reward'] = reward
-                self.memory[-1].append(self._prepare_memory_record(**self.prev_step_info))
+                self._update_memory(self.memory[-1], **self.prev_step_info)
             self.prev_step_info = dict(observation = observation,
                                        action_probabilities = action_probabilities,
                                        action = action,
@@ -169,10 +169,11 @@ class BaseKerasAgent(object):
     def plot_layers(self, to_save=''):
         pass
 
-    def _prepare_memory_record(self, observation = None, action_probabilities = None, action = None, reward = None, done = None):
-        rec = MemoryRecord(observation, action, reward)
-        # logger.debug('Add memory record\n%s' % repr(rec))
-        return rec
+    def _init_memory_for_new_episode():
+        return []
+
+    def _update_memory(self, episode_memory, observation = None, action_probabilities = None, action = None, reward = None, done = None):
+        episode_memory.append(MemoryRecord(observation, action, reward, done))
 
     def _gen_train_val_data_from_memory(self):
         '''If we have another self.memory strucutre, then we will need to override this'''
@@ -186,5 +187,13 @@ class BaseKerasAgent(object):
     ##############################################################
     ################ Methods mandatory to implement ##############
     ##############################################################
+    def _predict_action_probabilities(self, observation):
+        raise NotImplemented()
+
     def _build_inner_model(self, input_layer):
         raise NotImplemented()
+
+
+class BaseStandaloneKerasAgent(BaseKerasAgent):
+    def _predict_action_probabilities(self, observation):
+        self.model.predict(observation)

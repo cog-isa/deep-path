@@ -78,8 +78,8 @@ class MultilayerPathFindingByPixelEnv(BasePathFindingByPixelEnv):
         self.state[(StateLayers.WALKED,) + self.cur_position_discrete] = 1
         self.state[(StateLayers.GOAL,) + self.cur_task.finish] = 1
 
-    def _get_state(self):
-        self.state[(StateLayers.WALKED,) + tuple(self.cur_position_discrete)] = 1
+    def _get_state(self, cur_position_discrete):
+        self.state[(StateLayers.WALKED,) + tuple(cur_position_discrete)] = 1
         return self.state
 
     def _get_observation_space(self, map_shape):
