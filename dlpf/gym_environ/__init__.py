@@ -11,6 +11,6 @@ gym.envs.registration.register('MultilayerPathFindingByPixelEnv-v1',
 gym.envs.registration.register('PathFindingByPixelWithDistanceMapEnv-v1',
                                entry_point = 'dlpf.gym_environ.flat:PathFindingByPixelWithDistanceMapEnv')
 
-gym.envs.registration.register('SearchBasedPathFindingByPixelWithDistanceMapEnv-v1',
-                               entry_point = 'dlpf.gym_environ.search_based:SearchBasedPathFindingByPixelWithDistanceMapEnv')
+gym.envs.registration.register('FlatSearchBasedPathFindingEnv-v1',
+                               entry_point = 'dlpf.gym_environ.search_based:FlatSearchBasedPathFindingEnv')
 

@@ -3,8 +3,9 @@ from scipy.spatial.distance import euclidean
 
 import keras
 from keras.models import Model
-from keras.layers import Dense, Input, Activation
+from keras.layers import Dense, Input, Activation, Flatten
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from keras.optimizers import Optimizer
 
 from dlpf.base_utils import load_object_from_dict
 from dlpf.keras_utils import get_optimizer, choose_samples_per_epoch
@@ -70,9 +71,14 @@ class BaseKerasAgent(object):
         self.max_memory_size = max_memory_size
         self.output_activation = output_activation
         self.loss = loss
-        self.optimizer = get_optimizer(optimizer) \
-            if isinstance(optimizer, (str, unicode)) \
-            else get_optimizer(**optimizer)
+
+        if isinstance(optimizer, (str, unicode)):
+            self.optimizer = get_optimizer(optimizer)
+        elif isinstance(optimizer, Optimizer):
+            self.optimizer = optimizer
+        else:
+            self.optimizer = get_optimizer(**optimizer)
+
         self.model_metrics = model_metrics
         self.model_callbacks = model_callbacks
         self.epoch_number = epoch_number
@@ -188,10 +194,10 @@ class BaseKerasAgent(object):
     ################ Methods mandatory to implement ##############
     ##############################################################
     def _predict_action_probabilities(self, observation):
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def _build_inner_model(self, input_layer):
-        raise NotImplemented()
+        raise NotImplementedError()
 
 
 class BaseStandaloneKerasAgent(BaseKerasAgent):

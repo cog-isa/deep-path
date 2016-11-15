@@ -28,8 +28,6 @@ class InfoValues:
 
 
 class BasePathFindingEnv(gym.Env):
-    action_space = gym.spaces.Discrete(len(BY_PIXEL_ACTIONS))
-
     def __init__(self):
         self.task_set = None
         self.cur_task = None

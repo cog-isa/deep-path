@@ -90,7 +90,10 @@ class FlatObservationMixin(object):
                               self.path_policy.get_start_position(),
                               self.path_policy.get_global_goal(),
                               self.absolute_distance_observation_weight)
-    
+
+    def _get_flat_observation_shape(self, map_shape):
+        return (2 * self.vision_range + 1, 2 * self.vision_range + 1)
+
     def _configure(self,
                    vision_range = 10,
                    target_on_border_reward = 5,
@@ -109,7 +112,7 @@ class PathFindingByPixelWithDistanceMapEnv(WithDistanceMapMixin, FlatObservation
     def _get_observation_space(self, map_shape):
         return gym.spaces.Box(low = 0,
                               high = 1,
-                              shape = (2 * self.vision_range + 1, 2 * self.vision_range + 1))
+                              shape = self._get_flat_observation_shape(map_shape))
 
     def _get_new_agent_positions(self):
         return (self.cur_position_discrete, )

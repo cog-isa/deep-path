@@ -1,0 +1,6 @@
+ctor: dlpf.agents.our_dqn.SimpleMaxValueRankingNoLearningAgent
+kwargs:
+  action_policy: identity
+  max_memory_size: 40
+  passes_over_train_data: 0
+  validation_part: 0

@@ -28,7 +28,7 @@ class BaseSearchAlgo(object):
 
         while len(self.queue) > 0:
             self._reorder_queue()
-            best_next, _ = self.queue.pop()
+            best_next = self.queue.pop()
 
             new_variants_with_ratings = self._gen_new_variants(best_next)
             if len(new_variants_with_ratings) == 0:
@@ -36,12 +36,12 @@ class BaseSearchAlgo(object):
 
             self.queue.extend(p for p, _ in new_variants_with_ratings)
             self.ratings.update(new_variants_with_ratings)
-            self.backrefs.update((new_point, best_next) for new_point, _ in new_variants)
-            return best_next, new_variants
+            self.backrefs.update((new_point, best_next) for new_point, _ in new_variants_with_ratings)
+            return best_next, new_variants_with_ratings
 
         return False
 
-    def update_ratings(self, **updates):
+    def update_ratings(self, updates):
         self.ratings.update(updates)
 
     def goal_achieved(self):

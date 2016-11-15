@@ -86,11 +86,17 @@ class AnnealedSoftmaxSamplePolicy(PolynomiallyAnnealedPolicyMixin, SoftmaxSample
     pass
 
 
+class IdentityPolicy(BaseActionPolicy):
+    def choose_action(self, actions):
+        return actions
+
+
 _ACTION_POLICIES = {
     'epsilon_greedy' : EpsilonGreedyPolicy,
     'annealed_epsilon_greedy' : AnnealedEpsilonGreedyPolicy,
     'softmax_sample' : SoftmaxSamplePolicy,
-    'annealed_softmax_sample' : AnnealedSoftmaxSamplePolicy
+    'annealed_softmax_sample' : AnnealedSoftmaxSamplePolicy,
+    'identity' : IdentityPolicy
 }
 DEFAULT_ACTION_POLICY = 'epsilon_greedy'
 

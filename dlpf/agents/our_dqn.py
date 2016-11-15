@@ -5,7 +5,8 @@ from keras.layers import Dense, Flatten, Dropout, Reshape, \
     BatchNormalization, Activation
 
 from .base import BaseStandaloneKerasAgent
-from .ranking import BasePointwiseRankingAgent, BasePairwiseRankingAgent
+from .ranking import BasePointwiseRankingAgent, BasePairwiseRankingAgent, \
+    SimpleMaxValueRankingAgent
 from .architectures import OneLayer, TwoLayer, ConvAndDense
 
 
@@ -46,4 +47,11 @@ class TwoLayerPairwiseAgent(TwoLayer, BasePairwiseRankingAgent):
 
 
 class ConvAndDensePairwiseAgent(ConvAndDense, BasePairwiseRankingAgent):
+    pass
+
+
+###############################################################################
+######################## Greedy agents without learning #######################
+###############################################################################
+class SimpleMaxValueRankingNoLearningAgent(OneLayer, SimpleMaxValueRankingAgent):
     pass
