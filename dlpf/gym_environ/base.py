@@ -76,7 +76,6 @@ class BasePathFindingEnv(gym.Env):
         self.obstacle_punishment = abs(obstacle_punishment)
         self.local_goal_reward = local_goal_reward
         self.done_reward = done_reward
-        self.stop_game_after_invalid_action = stop_game_after_invalid_action
 
     def _seed(self, seed = None):
         self.np_random, seed1 = gym.utils.seeding.np_random(seed)
@@ -132,6 +131,7 @@ class BasePathFindingByPixelEnv(BasePathFindingEnv):
         super(BasePathFindingByPixelEnv, self).__init__()
         self.cur_position_discrete = None
         self.goal_error = None
+        self.stop_game_after_invalid_action = None
 
     ####################################################
     ######## Default environment implementation ########
@@ -173,16 +173,17 @@ class BasePathFindingByPixelEnv(BasePathFindingEnv):
         logger.debug('Reward is %f' % reward)
         return self._get_state(), reward, done, info
 
-    def _reset(self):
-        result = super(BasePathFindingByPixelEnv, self)._reset()
+    def _init_state(self):
         self.cur_position_discrete = self.path_policy.get_start_position()
-        return self._init_state()
+        return self._get_state()
 
     def _configure(self,
                    goal_error = 1,
+                   stop_game_after_invalid_action = False,
                    *args, **kwargs):
         super(BasePathFindingByPixelEnv, self)._configure(*args, **kwargs)
         self.goal_error = goal_error
+        self.stop_game_after_invalid_action = stop_game_after_invalid_action
 
     ####################################################
     ########### Methods optional to implement ##########

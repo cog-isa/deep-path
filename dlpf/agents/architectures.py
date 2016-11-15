@@ -23,7 +23,7 @@ class TwoLayer(object):
         self.hidden_size = hidden_size
         self.hidden_activation = hidden_activation
         self.dropout = dropout
-        super(TwoLayerAgent, self).__init__(*args, **kwargs)
+        super(TwoLayer, self).__init__(*args, **kwargs)
 
     def _build_inner_model(self, input_layer):
         h = Flatten()(input_layer)
@@ -58,7 +58,7 @@ class ConvAndDense(object):
         self.conv_dropouts = conv_dropouts
         self.conv_pooling = conv_pooling
         self.conv_batchnorm = conv_batchnorm
-        super(ConvAndDenseAgent, self).__init__(*args, **kwargs)
+        super(ConvAndDense, self).__init__(*args, **kwargs)
 
     def _build_inner_model(self, input_layer):
         h = input_layer

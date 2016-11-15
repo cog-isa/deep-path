@@ -169,7 +169,7 @@ class BaseKerasAgent(object):
     def plot_layers(self, to_save=''):
         pass
 
-    def _init_memory_for_new_episode():
+    def _init_memory_for_new_episode(self):
         return []
 
     def _update_memory(self, episode_memory, observation = None, action_probabilities = None, action = None, reward = None, done = None):
@@ -196,4 +196,4 @@ class BaseKerasAgent(object):
 
 class BaseStandaloneKerasAgent(BaseKerasAgent):
     def _predict_action_probabilities(self, observation):
-        self.model.predict(observation)
+        return self.model.predict(observation.reshape((1,) + observation.shape))

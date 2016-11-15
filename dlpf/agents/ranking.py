@@ -117,7 +117,7 @@ class BasePairwiseRankingAgent(BaseRankingAgent):
     def _prepare_episode_info(self, episode_states):
         sorted_state_ids = sort_episode_steps(episode)
         return [ MemoryRecord(numpy.stack([s1_info.observation.viewport,
-                                           s2_info.observation.viewport])
+                                           s2_info.observation.viewport]),
                               0,
                               self.weighting_function(i, n) - self.weighting_function(j, n),
                               state_info.done)

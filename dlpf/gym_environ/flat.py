@@ -71,12 +71,12 @@ class FlatObservationMixin(object):
         self.vision_range = vision_range
         self.target_on_border_reward = target_on_border_reward
         self.absolute_distance_observation_weight = absolute_distance_observation_weight
-        super(PathFindingByPixelWithDistanceMapEnv, self)._configure(*args, **kwargs)
+        super(FlatObservationMixin, self)._configure(*args, **kwargs)
 
 
 class PathFindingByPixelWithDistanceMapEnv(WithDistanceMapMixin, FlatObservationMixin, BasePathFindingByPixelEnv):
     def _get_state(self):
-        self._get_base_state(self.cur_position_discrete)
+        return self._get_base_state(self.cur_position_discrete)
 
     def _get_observation_space(self, map_shape):
         return gym.spaces.Box(low = 0,
