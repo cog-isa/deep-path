@@ -10,16 +10,35 @@ logger = logging.getLogger(__name__)
 
 
 class WithDistanceMapMixin(object):
+    def __init__(self, *args, **kwargs):
+        super(WithDistanceMapMixin, self).__init__(*args, **kwargs)
+        self.distance_map = None
+        self._unique_positions = None
+        self._sum_reward = None
+
+    def get_episode_stat(self):
+        stat = super(WithDistanceMapMixin, self).get_episode_stat()
+        if not self.distance_map is None:
+            optimal_path_length = self.distance_map[self.path_policy.get_start_position()]
+            if optimal_path_length > 0:
+                real_path_length = float(len(self._unique_agent_positions))
+                stat['path_len_rate'] = real_path_length / optimal_path_length
+            else:
+                stat['path_len_rate'] = numpy.inf
+
+            minimal_sum_reward = optimal_path_length + self._get_done_reward()
+            stat['sum_reward_rate'] = self._sum_reward / minimal_sum_reward
+        else:
+            stat['path_len_rate'] = numpy.inf
+            stat['sum_reward_rate'] = numpy.inf
+        return stat
+
     def _init_state(self):
         self.distance_map = build_distance_map(numpy.array(self.cur_task.local_map, dtype = numpy.int),
                                                numpy.array(self.path_policy.get_global_goal(), dtype = numpy.int))
+        self._unique_agent_positions = set(self.path_policy.get_start_position())
+        self._sum_reward = 0.0
         return super(WithDistanceMapMixin, self)._init_state()
-
-    def _current_optimal_score(self):
-        dm = getattr(self, 'distance_map', None)
-        if dm is None:
-            return 0
-        return self.distance_map[self.path_policy.get_start_position()] + self._get_done_reward()
 
     def _get_usual_reward(self, old_position, new_position):
         old_height = self.distance_map[tuple(old_position)]
@@ -50,6 +69,15 @@ class WithDistanceMapMixin(object):
         self.greedy_distance_reward_weight = greedy_distance_reward_weight
         self.absolute_distance_reward_weight = absolute_distance_reward_weight
         super(WithDistanceMapMixin, self)._configure(*args, **kwargs)
+
+    def _step(self, action):
+        observation, reward, done, info = super(WithDistanceMapMixin, self)._step(action)
+        self._sum_reward += abs(reward)
+        self._unique_agent_positions.update(tuple(p) for p in self._get_new_agent_positions())
+        return observation, reward, done, info
+    
+    def _get_new_agent_positions(self):
+        raise NotImplemented()
 
 
 class FlatObservationMixin(object):
@@ -83,3 +111,5 @@ class PathFindingByPixelWithDistanceMapEnv(WithDistanceMapMixin, FlatObservation
                               high = 1,
                               shape = (2 * self.vision_range + 1, 2 * self.vision_range + 1))
 
+    def _get_new_agent_positions(self):
+        return (self.cur_position_discrete, )

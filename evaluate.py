@@ -5,7 +5,7 @@ import argparse, logging, os
 os.environ['KERAS_BACKEND'] = 'theano'
 
 from dlpf.base_utils import init_log, LOGGING_LEVELS, ensure_dir_exists, \
-    copy_yaml_configs_to_json
+    copy_yaml_configs_to_json, rename_and_update
 from dlpf.benchmark import evaluate_agent_with_configs
 from dlpf.plot_utils import basic_plot_from_df, basic_plot_from_df_rolling_mean
 from dlpf.fglab_utils import create_scores_file, create_charts_file
@@ -64,9 +64,11 @@ if __name__ == '__main__':
                                         out_file = os.path.join(args.output, '%s_full_smoothed.png' % stat_title),
                                         ignore = SERIES_NOT_TO_PLOT)
 
+    all_scores = {}
+    rename_and_update(all_scores, 'train %s', all_stats[0].scores)
+    rename_and_update(all_scores, 'test %s', all_stats[0].scores)
     create_scores_file(os.path.join(args.output, 'scores.json'),
-                       train_score = all_stats[0].score,
-                       test_score = all_stats[1].score)
+                       **all_scores)
     create_charts_file(os.path.join(args.output, 'charts.json'),
                        **{ '_'.join((stat_title, attr)) : getattr(stat, attr)
                           for stat_title, stat in zip(STATS_TITLES, all_stats)

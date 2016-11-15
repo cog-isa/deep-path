@@ -24,8 +24,7 @@ def apply_agent(environment,
     for episode_i in xrange(episodes_number):
         logger.info('Start episode %d' % episode_i)
 
-        new_episode_info = dict(optimal_score = environment.current_optimal_score(),
-                                prev_result = prev_result)
+        new_episode_info = dict(prev_result = prev_result)
         rename_and_update(new_episode_info, 'env %s', **environment.get_episode_stat())
         rename_and_update(new_episode_info, 'agent %s', **agent.get_episode_stat())
         stat.new_episode(**new_episode_info)

@@ -40,9 +40,6 @@ class BasePathFindingEnv(gym.Env):
         self.local_goal_reward = None
         self.done_reward = None
 
-    def current_optimal_score(self):
-        return self._current_optimal_score()
-
     def get_episode_stat(self):
         return {}
 
@@ -118,9 +115,6 @@ class BasePathFindingEnv(gym.Env):
         raise NotImplemented()
 
     def _get_observation_space(self, map_shape):
-        raise NotImplemented()
-    
-    def _current_optimal_score(self):
         raise NotImplemented()
 
 

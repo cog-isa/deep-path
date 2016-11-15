@@ -90,4 +90,4 @@ if __name__ == '__main__':
                                         ignore = SERIES_NOT_TO_PLOT)
 
     create_scores_file(os.path.join(args.output, 'scores.json'),
-                       train_score = stats[0].score)
+                       **stats[0].scores)

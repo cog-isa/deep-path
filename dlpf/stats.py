@@ -23,7 +23,7 @@ class StatHolder(object):
 BaseStats = collections.namedtuple('BaseStats',
                                    'episodes full'.split(' '))
 RunStats = collections.namedtuple('RunStats',
-                                  'score episodes full'.split(' '))
+                                  'scores episodes full'.split(' '))
     
 def aggregate_application_base_stats(stats_lst):
     full_step_stats = pandas.DataFrame(data = list(itertools.chain.from_iterable(ep.steps
@@ -36,13 +36,6 @@ def aggregate_application_base_stats(stats_lst):
 
 
 def aggregate_application_run_stats(stats_lst):
-    full_step_stats = pandas.DataFrame(data = list(itertools.chain.from_iterable(ep.steps
-                                                                                 for stat in stats_lst
-                                                                                 for ep in stat.episodes_data)))
-    episodes_stats = pandas.DataFrame(data = [no_copy_update(ep.info,
-                                                             score = (sum(abs(d['reward']) for d in ep.steps)
-                                                                      / float(ep.info['optimal_score'])) )
-                                              for stat in stats_lst
-                                              for ep in stat.episodes_data])
-    score = episodes_stats['score'].replace([numpy.inf, -numpy.inf], numpy.nan).dropna().mean()
-    return RunStats(score, episodes_stats, full_step_stats)
+    episodes_stats, full_step_stats = aggregate_application_base_stats(stats_lst)
+    scores = pandas.get_dummies(episodes_stats).replace([numpy.inf, -numpy.inf], numpy.nan).apply(lambda c: c.dropna().mean(), axis = 0)
+    return RunStats(scores, episodes_stats, full_step_stats)
