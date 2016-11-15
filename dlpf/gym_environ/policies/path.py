@@ -59,6 +59,7 @@ class RandomStartAndFinishMixin(object):
                 self.finish = self._gen_point()
                 if local_map[self.start] == 0 \
                     and local_map[self.finish] == 0 \
+                    and self.start != self.finish \
                     and check_finish_achievable(numpy.array(local_map, dtype = numpy.int),
                                                 numpy.array(self.start, dtype = numpy.int),
                                                 numpy.array(self.finish, dtype = numpy.int)):
