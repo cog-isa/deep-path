@@ -149,6 +149,9 @@ class BaseKerasAgent(object):
         train_gen, val_gen = self._gen_train_val_data_from_memory()
 
         total_samples = sum(len(ep) for ep in self.memory)
+        if total_samples == 0:
+            return
+
         (train_samples_per_epoch,
          val_samples_per_epoch) = choose_samples_per_epoch(total_samples,
                                                            self.batch_size,

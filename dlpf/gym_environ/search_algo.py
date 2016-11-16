@@ -35,6 +35,9 @@ class BaseSearchAlgo(object):
             best_next = self.queue.pop()
             self.visited_nodes.add(best_next)
 
+            if self.goal_achieved():
+                return StepResult(False, self.finish, [])
+
             new_variants_with_ratings = self._gen_new_variants(best_next)
             if len(new_variants_with_ratings) == 0:
                 continue
