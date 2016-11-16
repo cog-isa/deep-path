@@ -185,8 +185,8 @@ class BasePairwiseRankingAgent(BaseRankingAgent):
         super(BasePairwiseRankingAgent, self).__init__(*args, **kwargs)
         self._comparison_cache = {}
 
-    def new_episode(self):
-        super(BasePairwiseRankingAgent, self).new_episode()
+    def new_episode(self, *args, **kwargs):
+        super(BasePairwiseRankingAgent, self).new_episode(*args, **kwargs)
         self._comparison_cache = {}
 
     def _build_model(self):
@@ -245,7 +245,7 @@ class BasePairwiseRankingAgent(BaseRankingAgent):
 
 class SimpleMaxValueRankingAgent(BaseRankingAgent):
     def _predict_action_probabilities(self, observation):
-        return { node.cur_id : node.viewport.max() for node in observation }
+        return { node.cur_id : -euclidean(node.cur_id, self.goal) for node in observation }
 
     def _prepare_episode_info(self, episode_states):
         sorted_state_ids, stats = sort_episode_steps(episode_states)

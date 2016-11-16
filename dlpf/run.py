@@ -30,7 +30,7 @@ def apply_agent(environment,
         stat.new_episode(**new_episode_info)
 
         observation = environment.reset()
-        agent.new_episode()
+        agent.new_episode(environment.get_global_goal())
 
         reward, done = (initial_reward, False) if allow_train else (None, None)
 

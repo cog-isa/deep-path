@@ -41,6 +41,9 @@ class BasePathFindingEnv(gym.Env):
     def get_episode_stat(self):
         return {}
 
+    def get_global_goal(self):
+        return self.path_policy.get_global_goal()
+
     ####################################################
     ######## Default environment implementation ########
     ####################################################

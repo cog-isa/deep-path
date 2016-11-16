@@ -94,6 +94,8 @@ class BaseKerasAgent(object):
         self.train_data_output_type = train_data_output_type
         self.split_rand = split_rand
 
+        self.goal = None
+
         self.model_callbacks.append(ReduceLROnPlateau(monitor = 'val_loss',
                                                       factor = self.reduce_lr_on_plateau_factor,
                                                       patience = self.reduce_lr_on_plateau_patience,
@@ -123,11 +125,12 @@ class BaseKerasAgent(object):
                            metrics = self.model_metrics)
         self.model.summary()
 
-    def new_episode(self):
+    def new_episode(self, goal):
         self.memory.append(self._init_memory_for_new_episode())
         self.memory = self.memory[-self.max_memory_size:]
         self.prev_step_info = None
         self.action_policy.new_episode()
+        self.goal = goal
 
     def act(self, observation, reward = None, done = None):
         action_probabilities = self._predict_action_probabilities(observation)
