@@ -1,7 +1,10 @@
-import collections, itertools, numpy, json
+import collections, itertools, numpy, json, logging
 from scipy.spatial.distance import euclidean
 
 from .base import BaseKerasAgent, split_train_val_replay_gens, MemoryRecord
+
+
+logger = logging.getLogger(__name__)
 
 
 def sort_episode_steps(episode):
@@ -21,7 +24,14 @@ def sort_episode_steps(episode):
         chains[state_id][state_id] = 0
     winning_chains = { state_id
                       for state_id in queue
-                      if episode[state_id].done }
+                      if episode[state_id].observation.goal }
+
+    #for s in winning_chains:
+    #    wc = [s]
+    #    while not episode[s].observation.prev_id is None:
+    #        s = episode[s].observation.prev_id
+    #        wc.append(s)
+    #    logger.info('winning! %s' % repr(s))
 
     while len(queue) > 0:
         state_id = queue.popleft()
@@ -56,7 +66,12 @@ def sort_episode_steps(episode):
 
         d1 = min_distance_to_winning_state(s1)
         d2 = min_distance_to_winning_state(s2)
-        return d2 - d1
+        if d1 == d2:
+            return 0
+        elif d2 > d1:
+            return 1
+        else:
+            return -1
 
     result = chains.keys()
     result.sort(cmp = compare_states)
@@ -96,9 +111,10 @@ class BaseRankingAgent(BaseKerasAgent):
         return EpisodeWithPreparedInfo()
 
     def _update_memory(self, episode_memory, observation = None, action_probabilities = None, action = None, reward = None, done = None):
+        #logger.info('Done %r' % done)
+        #logger.info('obs %s' % [(n.cur_id, n.goal) for n in observation])
         for node in observation:
-            if not node.cur_id in episode_memory.all_states:
-                episode_memory.all_states[node.cur_id] = MemoryRecord(node, None, None, done)
+            episode_memory.all_states[node.cur_id] = MemoryRecord(node, None, None, done)
 
     def _gen_train_val_data_from_memory(self):
         for episode in self.memory:

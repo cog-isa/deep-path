@@ -23,6 +23,9 @@ class WithDistanceMapMixin(object):
             if optimal_path_length > 0:
                 real_path_length = float(len(self._unique_agent_positions))
                 stat['path_len_rate'] = real_path_length / optimal_path_length
+                #logger.info('path_len_rate %f, %d, %r' % (stat['path_len_rate'],
+                #                                          optimal_path_length,
+                #                                          self._unique_agent_positions))
             else:
                 stat['path_len_rate'] = numpy.inf
 
@@ -36,7 +39,7 @@ class WithDistanceMapMixin(object):
     def _init_state(self):
         self.distance_map = build_distance_map(numpy.array(self.cur_task.local_map, dtype = numpy.int),
                                                numpy.array(self.path_policy.get_global_goal(), dtype = numpy.int))
-        self._unique_agent_positions = set(self.path_policy.get_start_position())
+        self._unique_agent_positions = { self.path_policy.get_start_position() }
         self._sum_reward = 0.0
         return super(WithDistanceMapMixin, self)._init_state()
 

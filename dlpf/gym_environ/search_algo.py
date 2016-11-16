@@ -5,6 +5,9 @@ from scipy.spatial.distance import euclidean
 from .utils import BY_PIXEL_ACTION_DIFFS
 
 
+StepResult = collections.namedtuple('StepResult',
+                                    'must_continue best_next new_variants_with_ratings'.split(' '))
+
 class BaseSearchAlgo(object):
     def __init__(self):
         pass
@@ -17,18 +20,20 @@ class BaseSearchAlgo(object):
         self.queue = [self.start]
         self.ratings = { self.start : 0 }
         self.backrefs = { self.start : self.start }
+        self.visited_nodes = set()
 
     def walk_to_finish(self):
-        while self.step():
+        while self.step().must_continue:
             pass
 
     def step(self):
         if self.goal_achieved():
-            return False
+            return StepResult(False, self.finish, [])
 
         while len(self.queue) > 0:
             self._reorder_queue()
             best_next = self.queue.pop()
+            self.visited_nodes.add(best_next)
 
             new_variants_with_ratings = self._gen_new_variants(best_next)
             if len(new_variants_with_ratings) == 0:
@@ -37,15 +42,15 @@ class BaseSearchAlgo(object):
             self.queue.extend(p for p, _ in new_variants_with_ratings)
             self.ratings.update(new_variants_with_ratings)
             self.backrefs.update((new_point, best_next) for new_point, _ in new_variants_with_ratings)
-            return best_next, new_variants_with_ratings
+            return StepResult(True, best_next, new_variants_with_ratings)
 
-        return False
+        return StepResult(False, None, [])
 
     def update_ratings(self, updates):
         self.ratings.update(updates)
 
     def goal_achieved(self):
-        return self.finish in self.backrefs
+        return self.finish in self.visited_nodes
 
     def get_best_path(self):
         self.walk_to_finish()

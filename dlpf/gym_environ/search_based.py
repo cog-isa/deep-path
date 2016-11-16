@@ -1,12 +1,15 @@
-import collections, gym
+import collections, gym, logging
 
 from .base import BasePathFindingEnv, InfoValues
 from .flat import WithDistanceMapMixin, FlatObservationMixin
 from .search_algo import get_search_algo, DEFAULT_SEARCH_ALGO
 
 
+logger = logging.getLogger(__name__)
+
+
 VisitedNodeInfo = collections.namedtuple('VisitedNodeInfo',
-                                         'cur_id prev_id viewport'.split(' '))
+                                         'cur_id prev_id viewport goal'.split(' '))
 
 
 class MapSpace(gym.Space):
@@ -46,13 +49,11 @@ class BaseSearchBasedPathFindingEnv(BasePathFindingEnv):
         init_pos = self.path_policy.get_start_position()
         self._considered_nodes = { init_pos : VisitedNodeInfo(init_pos,
                                                               None,
-                                                              self._get_base_state(init_pos)) }
+                                                              self._get_base_state(init_pos),
+                                                              init_pos == self.path_policy.get_global_goal()) }
         return super(BaseSearchBasedPathFindingEnv, self)._init_state()
 
     def _get_state(self):
-        if self._searcher.goal_achieved():
-            return [ self._considered_nodes[self.path_policy.get_global_goal()] ]
-
         return [n for n in self._considered_nodes.viewvalues()
                 if not n.cur_id in self._visited_nodes]
 
@@ -60,20 +61,22 @@ class BaseSearchBasedPathFindingEnv(BasePathFindingEnv):
         self._searcher.update_ratings(action)
         search_res = self._searcher.step()
 
-        if search_res == False:
-            info = InfoValues.NOTHING
-            done = False
-        else:
-            done = self._searcher.goal_achieved()
-            info = InfoValues.DONE if done else InfoValues.OK
+        done = self._searcher.goal_achieved()
+        info = InfoValues.DONE if done else InfoValues.OK
 
-            best_next, new_variants_with_ratings = search_res
-            self._visited_nodes.add(best_next)
+        if search_res.must_continue:
+            goal = self.path_policy.get_global_goal()
+            self._visited_nodes.add(search_res.best_next)
             self._considered_nodes.update((new_pos,
                                            VisitedNodeInfo(new_pos,
-                                                           best_next,
-                                                           self._get_base_state(new_pos)))
-                                          for new_pos, _ in new_variants_with_ratings)
+                                                           search_res.best_next,
+                                                           self._get_base_state(new_pos),
+                                                           new_pos == goal))
+                                          for new_pos, _
+                                          in search_res.new_variants_with_ratings)
+        else:
+            if not done:
+                info = InfoValues.NOTHING
 
         return self._get_state(), 0.0, done, info
 
