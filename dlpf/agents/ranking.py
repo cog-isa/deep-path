@@ -183,41 +183,61 @@ class BasePointwiseRankingAgent(BaseRankingAgent):
 class BasePairwiseRankingAgent(BaseRankingAgent):
     def __init__(self, *args, **kwargs):
         super(BasePairwiseRankingAgent, self).__init__(*args, **kwargs)
+        self._comparison_cache = {}
+
+    def new_episode(self):
+        super(BasePairwiseRankingAgent, self).new_episode()
+        self._comparison_cache = {}
+
+    def _build_model(self):
         self.input_shape = (2,) + self.input_shape
+        super(BasePairwiseRankingAgent, self)._build_model()
 
     def _predict_action_probabilities(self, observation):
-        unique_pairs = [(n1, n2)
-                        for i, n1 in enumerate(observation)
-                        for n2 in observation[i+1:] ]
-        all_samples = numpy.stack([(n1.viewport, n2.viewport) for n1, n2 in unique_pairs])
-        comparisons_raw = self.model.predict(all_samples)
-        comparisons = { (n1.cur_id, n2.cur_id) : cmp_value
-                       for (n1, n2), cmp_value
-                       in itertools.izip(unique_pairs, comparisons_raw) }
         result = [node.cur_id for node in observation]
 
-        def precalculated_comparator(s1_id, s2_id):
-            direct_cmp = comparisons.get((s1_id, s2_id), None)
-            if not direct_cmp is None:
-                return direct_cmp
-            return -comparisons[(s2_id, s1_id)]
+        if len(observation) > 1:
+            new_unique_pairs = [(n1, n2)
+                                for i, n1 in enumerate(observation)
+                                for n2 in observation[i+1:]
+                                if not (n1.cur_id, n2.cur_id) in self._comparison_cache
+                                 and not (n2.cur_id, n1.cur_id) in self._comparison_cache]
+            if len(new_unique_pairs) > 0:
+                new_samples = numpy.stack([(n1.viewport, n2.viewport) for n1, n2 in new_unique_pairs])
+                new_comparisons_raw = self.model.predict(new_samples)
+                self._comparison_cache.update(((n1.cur_id, n2.cur_id), cmp_value)
+                                              for (n1, n2), cmp_value
+                                              in itertools.izip(new_unique_pairs,
+                                                                new_comparisons_raw[:, 0]))
 
-        result.sort(cmp = precalculated_comparator)
+            result.sort(cmp = self._compare_with_cache)
+
         n = len(result)
         return { state_id : self.weighting_function(i, n)
                 for i, state_id
                 in enumerate(result) }
 
+    def _compare_with_cache(self, s1_id, s2_id):
+        result = self._comparison_cache.get((s1_id, s2_id), None)
+        if result is None:
+            result = -self._comparison_cache[(s2_id, s1_id)]
+        if result > 0:
+            return 1
+        elif result < 0:
+            return -1
+        else:
+            return 0
+
     def _prepare_episode_info(self, episode_states):
         sorted_state_ids, stats = sort_episode_steps(episode_states)
+        n = len(episode_states)
         result = [ MemoryRecord(numpy.stack([s1_info.observation.viewport,
                                              s2_info.observation.viewport]),
                                 0,
                                 self.weighting_function(i, n) - self.weighting_function(j, n),
-                                state_info.done)
+                                None)
                   for i, s1_id in enumerate(sorted_state_ids)
                   for j, s2_id in enumerate(sorted_state_ids)
-                  if i != j
                   for s1_info in [ episode_states[s1_id] ]
                   for s2_info in [ episode_states[s2_id] ] ]
         return result, stats
