@@ -1,0 +1,15 @@
+ctor: FlatSearchBasedPathFindingEnv-v1
+kwargs:
+  done_reward: 10
+  local_goal_reward: 5
+  map_shape: !!python/tuple [10, 10]
+  tasks_dir: data/empty/imported/paths
+  maps_dir: data/empty/imported/maps
+  path_policy: random_start_and_finish_straight
+  target_on_border_reward: 5
+  task_policy: sequential
+  vision_range: 4
+  greedy_distance_reward_weight: 0.1
+  absolute_distance_reward_weight: 0.1
+  absolute_distance_observation_weight: 0.1
+  search_algo: astar
