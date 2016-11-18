@@ -2,8 +2,8 @@
 
 import argparse, logging, os, time
 
-os.environ['KERAS_BACKEND'] = 'theano'
-#os.environ['KERAS_BACKEND'] = 'tensorflow'
+#os.environ['KERAS_BACKEND'] = 'theano'
+os.environ['KERAS_BACKEND'] = 'tensorflow'
 #os.environ['THEANO_FLAGS'] = 'device=cpu'
 
 from dlpf.gym_environ import load_environment_from_yaml
@@ -70,8 +70,13 @@ if __name__ == '__main__':
                                   input_shape = env.observation_space.shape,
                                   number_of_actions = env.action_space.n,
                                   model_callbacks = [keras_hist])
+    
+    apply_kwargs = load_yaml(args.apply)
+    if int(apply_kwargs.get('visualize_each', 0)) > 0:
+        apply_kwargs['visualization_dir'] = args.output
+
     with Profiler(logger):
-        run_stats = apply_agent(env, agent, **load_yaml(args.apply))
+        run_stats = apply_agent(env, agent, **apply_kwargs)
 
     stats = (aggregate_application_run_stats([run_stats]),
              aggregate_application_base_stats([keras_hist.epoch_stats]),
