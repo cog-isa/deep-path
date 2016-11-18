@@ -207,6 +207,8 @@ class BasePairwiseRankingAgent(BaseRankingAgent):
                                  and not (n2.cur_id, n1.cur_id) in self._comparison_cache]
             if len(new_unique_pairs) > 0:
                 new_samples = numpy.stack([(n1.viewport, n2.viewport) for n1, n2 in new_unique_pairs])
+                if get_backend() == 'tf':
+                    new_samples = numpy.moveaxis(new_samples, 1, -1) # tensorflow is (None, rows, cols, layers)
                 new_comparisons_raw = self.model.predict(new_samples)
                 self._comparison_cache.update(((n1.cur_id, n2.cur_id), cmp_value)
                                               for (n1, n2), cmp_value
