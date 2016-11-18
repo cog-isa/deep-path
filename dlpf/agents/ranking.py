@@ -190,7 +190,10 @@ class BasePairwiseRankingAgent(BaseRankingAgent):
         self._comparison_cache = {}
 
     def _build_model(self):
-        self.input_shape = (2,) + self.input_shape
+        if get_backend() == 'tf':
+            self.input_shape = self.input_shape + (2,)
+        else:
+            self.input_shape = (2,) + self.input_shape
         super(BasePairwiseRankingAgent, self)._build_model()
 
     def _predict_action_probabilities(self, observation):
