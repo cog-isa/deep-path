@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
-import argparse, logging, os
+import argparse, logging, os, time
 
 os.environ['KERAS_BACKEND'] = 'theano'
+#os.environ['KERAS_BACKEND'] = 'tensorflow'
+#os.environ['THEANO_FLAGS'] = 'device=cpu'
 
 from dlpf.gym_environ import load_environment_from_yaml
 from dlpf.base_utils import init_log, LOGGING_LEVELS, ensure_dir_exists, \
@@ -91,3 +93,6 @@ if __name__ == '__main__':
 
     create_scores_file(os.path.join(args.output, 'scores.json'),
                        **stats[0].scores)
+    create_scores_file(os.path.join(args.output, 'scores.js'),
+                       **stats[0].scores)
+    time.sleep(1)
