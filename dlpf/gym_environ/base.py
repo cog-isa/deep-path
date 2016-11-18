@@ -44,6 +44,9 @@ class BasePathFindingEnv(gym.Env):
     def get_global_goal(self):
         return self.path_policy.get_global_goal()
 
+    def visualize_episode(self, out_fname):
+        self._visualize_episode(out_fname)
+
     ####################################################
     ######## Default environment implementation ########
     ####################################################
@@ -101,6 +104,9 @@ class BasePathFindingEnv(gym.Env):
         return self._get_state()
 
     def _render(self, mode = 'human', close = False):
+        pass
+
+    def _visualize_episode(self, out_fname):
         pass
 
     ####################################################

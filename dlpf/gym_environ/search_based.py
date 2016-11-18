@@ -3,6 +3,7 @@ import collections, gym, logging
 from .base import BasePathFindingEnv, InfoValues
 from .flat import WithDistanceMapMixin, FlatObservationMixin
 from .search_algo import get_search_algo, DEFAULT_SEARCH_ALGO
+from ..plot_utils import scatter_plot
 
 
 logger = logging.getLogger(__name__)
@@ -88,3 +89,29 @@ class FlatSearchBasedPathFindingEnv(WithDistanceMapMixin, FlatObservationMixin, 
 
     def _get_observation_space(self, map_shape):
         return MapSpace(self._get_flat_observation_shape(map_shape))
+
+    def _visualize_episode(self, out_file):
+        scatter_plot(({'label' : 'obstacle',
+                       'data' : self.obstacle_points_for_vis,
+                       'color' : 'black',
+                       'marker' : 's'},
+                      {'label' : 'considered',
+                       'data' : [(x, y) for y, x in self._considered_nodes.viewkeys()],
+                       'color' : 'gold',
+                       'marker' : 'x'},
+                      {'label' : 'visited',
+                       'data' : [(x, y) for y, x in self._searcher.visited_nodes],
+                       'color' : 'green',
+                       'marker' : '.'},
+                      {'label' : 'goal',
+                       'data' : [reversed(self.path_policy.get_global_goal())],
+                       'color' : 'red',
+                       'marker' : '*'},
+                      {'label' : 'start',
+                       'data' : [reversed(self.path_policy.get_start_position())],
+                       'color' : 'red',
+                       'marker' : '^'}),
+                     x_lim = (0, self.cur_task.local_map.shape[1]),
+                     y_lim = (0, self.cur_task.local_map.shape[0]),
+                     offset = (0.5, 0.5),
+                     out_file = out_file)

@@ -1,4 +1,4 @@
-import logging
+import logging, os
 from .base_utils import rename_and_update
 from .stats import StatHolder
 from .gym_environ.base import InfoValues
@@ -12,7 +12,9 @@ def apply_agent(environment,
                 max_steps = 100,
                 initial_reward = 0,
                 allow_train = False,
-                train_each_episodes = 10):
+                train_each_episodes = 10,
+                visualization_dir = None,
+                visualize_each = 10):
     logger.info('Applying agent %s to env %s in %d episodes, %d max steps, %s training' % (repr(agent),
                                                                                            repr(environment),
                                                                                            episodes_number,
@@ -21,7 +23,9 @@ def apply_agent(environment,
     stat = StatHolder()
     prev_result = InfoValues.NOTHING
 
-    for episode_i in xrange(episodes_number):
+    need_visualize = visualize_each and visualization_dir
+
+    for episode_i in xrange(1, episodes_number + 1):
         logger.info('Start episode %d' % episode_i)
 
         new_episode_info = dict(prev_result = prev_result)
@@ -49,9 +53,12 @@ def apply_agent(environment,
                 agent.act(observation, reward = reward, done = done)
                 break
 
+        if need_visualize and episode_i % visualize_each == 0:
+            environment.visualize_episode(os.path.join(visualization_dir, '%05d.png' % episode_i))
+
         prev_result = InfoValues.DONE if done else InfoValues.NOTHING
 
-        if allow_train and (episode_i + 1) % train_each_episodes == 0:
+        if allow_train and episode_i % train_each_episodes == 0:
             agent.train_on_memory()
 
     logger.info('Agent %s completed %d episodes with env %s' % (repr(agent),

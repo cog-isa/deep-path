@@ -4,6 +4,7 @@ from scipy.spatial.distance import euclidean
 from .base import BasePathFindingByPixelEnv
 # from .utils import line_intersection
 from .utils_compiled import build_distance_map, get_flat_state
+from ..plot_utils import scatter_plot
 
 
 logger = logging.getLogger(__name__)
@@ -84,6 +85,15 @@ class WithDistanceMapMixin(object):
 
 
 class FlatObservationMixin(object):
+    def _init_state(self):
+        result = super(FlatObservationMixin, self)._init_state()
+        m = self.cur_task.local_map
+        self.obstacle_points_for_vis = [(x, y)
+                                        for y in xrange(m.shape[0])
+                                        for x in xrange(m.shape[1])
+                                        if m[y, x] > 0]
+        return result
+
     def _get_base_state(self, cur_position_discrete):
         return get_flat_state(self.cur_task.local_map,
                               tuple(cur_position_discrete),
@@ -119,3 +129,25 @@ class PathFindingByPixelWithDistanceMapEnv(WithDistanceMapMixin, FlatObservation
 
     def _get_new_agent_positions(self):
         return (self.cur_position_discrete, )
+
+    def _visualize_episode(self, out_file):
+        scatter_plot(({'label' : 'obstacle',
+                       'data' : self.obstacle_points_for_vis,
+                       'color' : 'black',
+                       'marker' : 's'},
+                      {'label' : 'path',
+                       'data' : [(x, y) for y, x in self._unique_agent_positions],
+                       'color' : 'green',
+                       'marker' : '.'},
+                      {'label' : 'goal',
+                       'data' : [reversed(self.path_policy.get_global_goal())],
+                       'color' : 'red',
+                       'marker' : '*'},
+                      {'label' : 'start',
+                       'data' : [reversed(self.path_policy.get_start_position())],
+                       'color' : 'red',
+                       'marker' : '^'}),
+                     x_lim = (0, self.cur_task.local_map.shape[1]),
+                     y_lim = (0, self.cur_task.local_map.shape[0]),
+                     offset = (0.5, 0.5),
+                     out_file = out_file)
