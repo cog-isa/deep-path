@@ -2,7 +2,7 @@ import collections, itertools, numpy, json, logging, pandas
 from scipy.spatial.distance import euclidean
 
 from .base import BaseKerasAgent, split_train_val_replay_gens, MemoryRecord
-
+from ..keras_utils import get_backend
 
 logger = logging.getLogger(__name__)
 
@@ -231,8 +231,14 @@ class BasePairwiseRankingAgent(BaseRankingAgent):
     def _prepare_episode_info(self, episode_states):
         sorted_state_ids, stats = sort_episode_steps(episode_states)
         n = len(episode_states)
-        result = [ MemoryRecord(numpy.stack([s1_info.observation.viewport,
-                                             s2_info.observation.viewport]),
+
+        if get_backend() == 'tf':
+            reshape = lambda m: numpy.moveaxis(m, 0, -1) # tensorflow is (rows, cols, layers)
+        else:
+            reshape = lambda m: m
+
+        result = [ MemoryRecord(reshape(numpy.stack([s1_info.observation.viewport,
+                                                     s2_info.observation.viewport])),
                                 0,
                                 self.weighting_function(i, n) - self.weighting_function(j, n),
                                 None)

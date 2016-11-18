@@ -1,6 +1,7 @@
 import re, os, logging, numpy
 from keras.callbacks import Callback
 from keras.optimizers import RMSprop, Adagrad, Nadam, Adadelta
+import keras.backend as K
 from .base_utils import add_filename_suffix, copy_except, floor_to_number
 from .stats import StatHolder
 
@@ -85,3 +86,7 @@ def try_assign_theano_on_free_gpu():
             print traceback.format_exc()
             pass
     raise RuntimeError('no GPUs available')
+
+
+def get_backend():
+    return K.image_dim_ordering()
