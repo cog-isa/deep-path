@@ -9,7 +9,8 @@ from keras.layers import Dense, Flatten, Dropout, Reshape, \
 from .base import BaseStandaloneKerasAgent
 from .ranking import BasePointwiseRankingAgent, BasePairwiseRankingAgent, \
     SimpleMaxValueRankingAgent
-from .architectures import OneLayer, TwoLayer, ConvAndDense, DeepPreproc
+from .architectures import OneLayer, TwoLayer, ConvAndDense, DeepPreproc, \
+    Inception
 
 
 logger = logging.getLogger()
@@ -33,6 +34,10 @@ class ConvAndDenseAgent(ConvAndDense, BaseStandaloneKerasAgent):
 class DeepPreprocAgent(DeepPreproc, BaseStandaloneKerasAgent):
     def _predict_action_probabilities(self, observation):
         return self.model.predict(zoom(observation.reshape((1,) + observation.shape), self.scale_factor))
+
+
+class InceptionAgent(Inception, BaseStandaloneKerasAgent):
+    pass
 
 
 ###############################################################################
