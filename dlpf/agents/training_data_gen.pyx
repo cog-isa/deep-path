@@ -1,5 +1,6 @@
 import numpy
 cimport numpy
+import scipy.ndimage.interpolation
 
 import threading #
 
@@ -55,7 +56,7 @@ _OUTPUT_TYPES = {
 }
 
 
-@threadsafe_generator #
+@threadsafe_generator
 def replay_train_data_generator(list episodes, int batch_size, int actions_number, str output_type_name, rand):
     assert output_type_name in _OUTPUT_TYPES, 'Unknown output type %s' % output_type_name
     if len(episodes) == 0:
@@ -80,3 +81,8 @@ def replay_train_data_generator(list episodes, int batch_size, int actions_numbe
             yield (input_batch, output_batch)
             output_batch[:] = 0
             batch_i = 0
+
+def scale_tensors(base_gen, tuple scale_factor, int order):
+    for input_batch, output_batch in base_gen:
+        yield (scipy.ndimage.interpolation.zoom(input_batch, scale_factor, order = order),
+               output_batch)

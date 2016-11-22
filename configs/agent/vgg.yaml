@@ -1,0 +1,23 @@
+ctor: dlpf.agents.our_dqn.DeepPreprocAgent           
+kwargs:
+  nested_model:
+    ctor: keras.applications.vgg16.VGG16
+    kwargs: 
+      include_top: False 
+      weights: imagenet
+  output_activation: tanh
+  action_policy: {ctor: annealed_epsilon_greedy, eps: 0.9, final_eps: 0.1, episodes_number: 10000, degree: 2}
+  batch_size: 64
+  epoch_number: 100
+  loss: squared_hinge
+  max_memory_size: 250
+  optimizer: {ctor: adadelta}
+  passes_over_train_data: 10
+  validation_part: 0.1
+  keras_verbose: 2
+  early_stopping_patience: 3
+  train_gen_processes_number: 1
+  train_gen_queue_size: 100
+  reduce_lr_on_plateau_factor: 0.2
+  reduce_lr_on_plateau_patience: 100000
+  train_data_output_type: tanh_hinge

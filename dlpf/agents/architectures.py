@@ -1,8 +1,14 @@
-import keras, logging, itertools
+import keras, logging, itertools, numpy
 import keras.backend as K
 from keras.layers import Dense, Flatten, Dropout, Reshape, \
     Convolution2D, MaxPooling2D, AveragePooling2D, \
-    BatchNormalization, Activation
+    BatchNormalization, Activation, Lambda, Reshape, \
+    Permute, TimeDistributed
+from keras.applications.vgg16 import VGG16
+
+from ..keras_utils import get_backend
+from ..base_utils import load_object_from_dict
+from .training_data_gen import scale_tensors
 
 
 logger = logging.getLogger()
@@ -104,3 +110,73 @@ class ConvAndDense(object):
             h = Activation(act)(h)
 
         return h
+
+
+DEFAULT_DEEP_NESTED_MODEL = { 'ctor' : 'keras.applications.vgg16.VGG16',
+                             'kwargs' : { 'include_top' : False,
+                                         'weights' : 'imagenet' } }
+DEFAULT_SCALE_TARGET_SHAPE = (224, 224)
+class DeepPreproc(object):
+    def __init__(self,
+                 nested_model = DEFAULT_DEEP_NESTED_MODEL,
+                 scale_target_shape = DEFAULT_SCALE_TARGET_SHAPE,
+                 *args, **kwargs):
+        self.nested_model = nested_model
+        self.scale_target_shape = scale_target_shape
+        self.scale_factor = None
+        super(DeepPreproc, self).__init__(*args, **kwargs)
+
+    def _build_model(self):
+        self.src_input_shape = self.input_shape
+        if len(self.input_shape) == 2:
+            self.input_shape = self.scale_target_shape
+        elif len(self.input_shape) == 3:
+            if get_backend() == 'tf':
+                self.input_shape = self.scale_target_shape + (self.src_input_shape[-1],)
+            else:
+                self.input_shape = (self.src_input_shape[0],) + self.scale_target_shape
+        else:
+            raise NotImplementedError()
+
+        self.scale_factor = (1, ) + tuple(numpy.array(self.input_shape, dtype = 'float') / numpy.array(self.src_input_shape))
+
+        super(DeepPreproc, self)._build_model()
+
+    def _build_inner_model(self, h):
+        dim_order = get_backend()
+        if len(self.input_shape) == 2:
+            if dim_order == 'tf':
+                h = Reshape(self.input_shape + (1,))(h)
+                h = Lambda(lambda t: K.repeat_elements(t, 3, 3))(h)
+            else:
+                h = Reshape((1, ) + self.input_shape)(h)
+                h = Lambda(lambda t: K.repeat_elements(t, 3, 1))(h)
+            h = load_object_from_dict(self.nested_model)(h)
+
+        elif len(self.input_shape) == 3:
+            if dim_order == 'tf':
+                images_number = self.input_shape[-1]
+                image_shape = self.input_shape[:-1]
+
+                h = Permute((3, 1, 2))(h)
+                h = Reshape((images_number,) + image_shape + (1,))(h)
+                h = Lambda(lambda t: K.repeat_elements(t, 3, 4))(h)
+            else:
+                images_number = self.input_shape[0]
+                image_shape = self.input_shape[1:]
+
+                h = Reshape((images_number, 1) + image_shape)(h)
+                h = Lambda(lambda t: K.repeat_elements(t, 3, 2))(h)
+            h = TimeDistributed(load_object_from_dict(self.nested_model))(h)
+        else:
+            raise NotSupportedError()
+
+        h = Flatten()(h)
+        h = Dense(4096, activation = 'relu')(h)
+        h = Dense(4096, activation = 'relu')(h)
+
+        return h
+
+    def _gen_train_val_data_from_memory(self):
+        train_gen, val_gen = super(DeepPreproc, self)._gen_train_val_data_from_memory()
+        return scale_tensors(train_gen, self.scale_factor), scale_tensors(val_gen, scale_factor, 3)

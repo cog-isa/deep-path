@@ -1,3 +1,5 @@
+from scipy.ndimage.interpolation import zoom
+
 import keras, logging, itertools
 import keras.backend as K
 from keras.layers import Dense, Flatten, Dropout, Reshape, \
@@ -7,7 +9,7 @@ from keras.layers import Dense, Flatten, Dropout, Reshape, \
 from .base import BaseStandaloneKerasAgent
 from .ranking import BasePointwiseRankingAgent, BasePairwiseRankingAgent, \
     SimpleMaxValueRankingAgent
-from .architectures import OneLayer, TwoLayer, ConvAndDense
+from .architectures import OneLayer, TwoLayer, ConvAndDense, DeepPreproc
 
 
 logger = logging.getLogger()
@@ -28,6 +30,11 @@ class ConvAndDenseAgent(ConvAndDense, BaseStandaloneKerasAgent):
     pass
 
 
+class DeepPreprocAgent(DeepPreproc, BaseStandaloneKerasAgent):
+    def _predict_action_probabilities(self, observation):
+        return self.model.predict(zoom(observation.reshape((1,) + observation.shape), self.scale_factor))
+
+
 ###############################################################################
 ########################## Pointwise ranking agents ###########################
 ###############################################################################
@@ -39,6 +46,10 @@ class ConvAndDensePointwiseAgent(ConvAndDense, BasePointwiseRankingAgent):
     pass
 
 
+class DeepPreprocPointwiseAgent(DeepPreproc, BasePointwiseRankingAgent):
+    pass
+
+
 ###############################################################################
 ########################### Pairwise ranking agents ###########################
 ###############################################################################
@@ -47,6 +58,10 @@ class TwoLayerPairwiseAgent(TwoLayer, BasePairwiseRankingAgent):
 
 
 class ConvAndDensePairwiseAgent(ConvAndDense, BasePairwiseRankingAgent):
+    pass
+
+
+class DeepPreprocPairwiseAgent(DeepPreproc, BasePairwiseRankingAgent):
     pass
 
 
