@@ -133,13 +133,14 @@ class BaseKerasAgent(object):
         self.goal = goal
 
     def act(self, observation, reward = None, done = None):
+        if not reward is None and not self.prev_step_info is None: # that means that we can learn
+            self.prev_step_info['reward'] = reward
+            self._update_memory(self.memory[-1], **self.prev_step_info)
+
         action_probabilities = self._predict_action_probabilities(observation)
         action = self.action_policy.choose_action(action_probabilities)
 
         if not reward is None: # that means that we can learn
-            if not self.prev_step_info is None:
-                self.prev_step_info['reward'] = reward
-                self._update_memory(self.memory[-1], **self.prev_step_info)
             self.prev_step_info = dict(observation = observation,
                                        action_probabilities = action_probabilities,
                                        action = action,
