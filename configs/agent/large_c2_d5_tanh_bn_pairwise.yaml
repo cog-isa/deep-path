@@ -41,7 +41,7 @@ kwargs:
   loss: hinge
   max_memory_size: 50
   optimizer: {ctor: adadelta}
-  passes_over_train_data: 2
+  passes_over_train_data: 1
   validation_part: 0.1
   keras_verbose: 2
   early_stopping_patience: 3

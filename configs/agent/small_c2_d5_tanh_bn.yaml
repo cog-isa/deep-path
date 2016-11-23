@@ -39,9 +39,9 @@ kwargs:
   batch_size: 64
   epoch_number: 100
   loss: squared_hinge
-  max_memory_size: 250
+  max_memory_size: 40
   optimizer: {ctor: adadelta}
-  passes_over_train_data: 10
+  passes_over_train_data: 20
   validation_part: 0.1
   keras_verbose: 2
   early_stopping_patience: 3

@@ -55,6 +55,10 @@ class DeepPreprocPointwiseAgent(DeepPreproc, BasePointwiseRankingAgent):
     pass
 
 
+class InceptionPointwiseAgent(Inception, BasePointwiseRankingAgent):
+    pass
+
+
 ###############################################################################
 ########################### Pairwise ranking agents ###########################
 ###############################################################################
@@ -67,6 +71,10 @@ class ConvAndDensePairwiseAgent(ConvAndDense, BasePairwiseRankingAgent):
 
 
 class DeepPreprocPairwiseAgent(DeepPreproc, BasePairwiseRankingAgent):
+    pass
+
+
+class InceptionPairwiseAgent(Inception, BasePairwiseRankingAgent):
     pass
 
 

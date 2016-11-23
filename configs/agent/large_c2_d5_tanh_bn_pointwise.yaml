@@ -41,7 +41,7 @@ kwargs:
   loss: mae
   max_memory_size: 50
   optimizer: {ctor: adadelta}
-  passes_over_train_data: 50
+  passes_over_train_data: 20
   validation_part: 0.1
   keras_verbose: 2
   early_stopping_patience: 3
@@ -50,4 +50,4 @@ kwargs:
   reduce_lr_on_plateau_factor: 0.2
   reduce_lr_on_plateau_patience: 100000
   train_data_output_type: free_hinge
-  weighting_function: linear
+  weighting_function: cubic

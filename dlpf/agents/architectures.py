@@ -228,9 +228,10 @@ def inception_subsample(input_tensor, n, bn_axis, filters11, filters12, filters3
 
 DEFAULT_INCEPTION_STRUCTURE = [
     dict(type = 'conv', n = 3, filters1 = 64, filters2 = 64, filters31 = 64, filters32 = 64, filters41 = 64, filters42 = 64, filters43 = 64),
-#    dict(type = 'conv', n = 3, filters1 = 64, filters2 = 64, filters31 = 64, filters32 = 64, filters41 = 64, filters42 = 64, filters43 = 64),
-#    dict(type = 'subs', n = 3, filters11 = 64, filters12 = 64, filters31 = 64, filters32 = 64, filters33 = 64),
-#    dict(type = 'subs', n = 3, filters11 = 64, filters12 = 64, filters31 = 64, filters32 = 64, filters33 = 64)
+    dict(type = 'conv', n = 3, filters1 = 64, filters2 = 64, filters31 = 64, filters32 = 64, filters41 = 64, filters42 = 64, filters43 = 64),
+    dict(type = 'conv', n = 3, filters1 = 64, filters2 = 64, filters31 = 64, filters32 = 64, filters41 = 64, filters42 = 64, filters43 = 64),
+    dict(type = 'subs', n = 3, filters11 = 64, filters12 = 64, filters31 = 64, filters32 = 64, filters33 = 64),
+    dict(type = 'subs', n = 3, filters11 = 64, filters12 = 64, filters31 = 64, filters32 = 64, filters33 = 64)
 ]
 
 class Inception(object):
