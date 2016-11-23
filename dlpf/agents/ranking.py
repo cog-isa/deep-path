@@ -79,11 +79,21 @@ def sort_episode_steps(episode):
         chains1 = chains[s1]
         chains2 = chains[s2]
         common_chain_ids = { k for k in chains1.viewkeys() if k in chains2 }
+        if len(winning_chains & common_chain_ids) > 0:
+            common_winning = True
+            common_chain_ids.intersection_update(winning_chains)
+        else:
+            common_winning = False
 
         if len(common_chain_ids) > 0:
-            i1 = min(chains1[k] for k in common_chain_ids)
-            i2 = min(chains2[k] for k in common_chain_ids)
-            return i2 - i1 # closer to the end of chain (i is less) - bigger the state
+            if common_winning:
+                i1 = min(chains1[k] for k in common_chain_ids)
+                i2 = min(chains2[k] for k in common_chain_ids)
+                return i2 - i1 # closer to the end of winning chain (i is less) - bigger the state
+            else:
+                i1 = max(chains1[k] for k in common_chain_ids)
+                i2 = max(chains2[k] for k in common_chain_ids)
+                return i1 - i2 # farther from the end of terminated chain (i is more) - bigger the state
 
         if len(winning_chains.intersection(chains1.viewkeys())) > 0:
             return 1 # c1 should go right
@@ -91,14 +101,15 @@ def sort_episode_steps(episode):
         if len(winning_chains.intersection(chains2.viewkeys())) > 0:
             return -1 # c2 should go right
 
-        d1 = min_distance_to_winning_state(s1)
-        d2 = min_distance_to_winning_state(s2)
-        if d1 == d2:
-            return 0
-        elif d2 > d1:
-            return 1
-        else:
-            return -1
+        return 0
+        #d1 = min_distance_to_winning_state(s1)
+        #d2 = min_distance_to_winning_state(s2)
+        #if d1 == d2:
+        #    return 0
+        #elif d2 > d1:
+        #    return 1
+        #else:
+        #    return -1
 
     result = chains.keys()
     result.sort(cmp = compare_states)
@@ -118,8 +129,12 @@ class EpisodeWithPreparedInfo(object):
 def linear_weight(i, n):
     return float(i) / n
 
+def cubic_weight(i, n):
+    return (float(i) / n) ** 3
+
 _WEIGHTING_FUNCTIONS = {
-    'linear' : linear_weight
+    'linear' : linear_weight,
+    'cubic' : cubic_weight
 }
 DEFAULT_WEIGHTING = 'linear'
 
@@ -167,7 +182,9 @@ class BaseRankingAgent(BaseKerasAgent):
 
 class BasePointwiseRankingAgent(BaseRankingAgent):
     def _predict_action_probabilities(self, observation):
-        assert len(observation) > 0
+        if len(observation) == 0:
+            return {}
+
         all_observations = numpy.stack([node.viewport for node in observation])
         ratings = self.model.predict(all_observations)
         return { node.cur_id : rating for node, rating in itertools.izip(observation, ratings[:, 0]) }
