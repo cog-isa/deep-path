@@ -5,6 +5,7 @@ from .base import BasePathFindingByPixelEnv
 # from .utils import line_intersection
 from .utils_compiled import build_distance_map, get_flat_state
 from ..plot_utils import scatter_plot
+from ..keras_utils import get_tensor_reshaper, add_depth
 
 
 logger = logging.getLogger(__name__)
@@ -119,13 +120,27 @@ class FlatObservationMixin(object):
 
 
 class PathFindingByPixelWithDistanceMapEnv(WithDistanceMapMixin, FlatObservationMixin, BasePathFindingByPixelEnv):
+    def _init_state(self):
+        self.cur_episode_state_id_seq = [tuple(self.path_policy.get_start_position())]
+        return super(PathFindingByPixelWithDistanceMapEnv, self)._init_state()
+
     def _get_state(self):
-        return self._get_base_state(self.cur_position_discrete)
+        cur_pos = tuple(self.cur_position_discrete)
+        if cur_pos != self.cur_episode_state_id_seq[-1]:
+            self.cur_episode_state_id_seq.append(cur_pos)
+        result = [self._get_base_state(pos)
+                  for pos in self.cur_episode_state_id_seq[:-2-self.stack_previous_viewports:-1]]
+        if len(result) < self.stack_previous_viewports + 1:
+            empty = numpy.zeros_like(result[0])
+            for _ in xrange(self.stack_previous_viewports + 1 - len(result)):
+                result.append(empty)
+        return get_tensor_reshaper()(numpy.stack(result))
 
     def _get_observation_space(self, map_shape):
         return gym.spaces.Box(low = 0,
                               high = 1,
-                              shape = self._get_flat_observation_shape(map_shape))
+                              shape = add_depth(self._get_flat_observation_shape(map_shape),
+                                                depth = self.stack_previous_viewports + 1))
 
     def _get_new_agent_positions(self):
         return (self.cur_position_discrete, )
@@ -151,3 +166,11 @@ class PathFindingByPixelWithDistanceMapEnv(WithDistanceMapMixin, FlatObservation
                      y_lim = (0, self.cur_task.local_map.shape[0]),
                      offset = (0.5, 0.5),
                      out_file = out_file)
+
+    def _configure(self,
+                   stack_previous_viewports = 0,
+                   *args, **kwargs):
+        assert stack_previous_viewports >= 0
+        self.stack_previous_viewports = stack_previous_viewports
+        return super(PathFindingByPixelWithDistanceMapEnv, self)._configure(*args, **kwargs)
+        

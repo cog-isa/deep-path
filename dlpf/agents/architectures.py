@@ -7,7 +7,7 @@ from keras.layers import Dense, Flatten, Dropout, Reshape, \
     Permute, TimeDistributed, merge, Input
 from keras.applications.vgg16 import VGG16
 
-from ..keras_utils import get_backend
+from ..keras_utils import get_backend, add_depth, get_depth
 from ..base_utils import load_object_from_dict
 from .training_data_gen import scale_tensors
 
@@ -70,15 +70,7 @@ class ConvAndDense(object):
     def _build_inner_model(self, input_layer):
         h = input_layer
 
-        is_theano = K.image_dim_ordering() == 'th'
-        if len(self.input_shape) == 2:
-            if is_theano: # theano is (layers, rows, cols)
-                reshape_input_to = (1,) + self.input_shape
-            else:
-                reshape_input_to = self.input_shape + (1,) # tensorflow is (rows, cols, layers)
-            h = Reshape(reshape_input_to)(h)
-
-        bn_axis = 0 if is_theano else 2
+        bn_axis = 0 if get_backend() == 'th' else 2
         for cores, core_size, stride, act, dropout, pool, bn in itertools.izip_longest(self.conv_cores,
                                                                                        self.conv_core_sizes,
                                                                                        self.conv_strides,
@@ -129,13 +121,8 @@ class DeepPreproc(object):
 
     def _build_model(self):
         self.src_input_shape = self.input_shape
-        if len(self.input_shape) == 2:
-            self.input_shape = self.scale_target_shape
-        elif len(self.input_shape) == 3:
-            if get_backend() == 'tf':
-                self.input_shape = self.scale_target_shape + (self.src_input_shape[-1],)
-            else:
-                self.input_shape = (self.src_input_shape[0],) + self.scale_target_shape
+        if len(self.input_shape) == 3:
+            self.input_shape = add_depth(self.scale_target_shape, get_depth(self.src_input_shape))
         else:
             raise NotImplementedError()
 
@@ -145,16 +132,7 @@ class DeepPreproc(object):
 
     def _build_inner_model(self, h):
         dim_order = get_backend()
-        if len(self.input_shape) == 2:
-            if dim_order == 'tf':
-                h = Reshape(self.input_shape + (1,))(h)
-                h = Lambda(lambda t: K.repeat_elements(t, 3, 3))(h)
-            else:
-                h = Reshape((1, ) + self.input_shape)(h)
-                h = Lambda(lambda t: K.repeat_elements(t, 3, 1))(h)
-            h = load_object_from_dict(self.nested_model)(h)
-
-        elif len(self.input_shape) == 3:
+        if len(self.input_shape) == 3:
             if dim_order == 'tf':
                 images_number = self.input_shape[-1]
                 image_shape = self.input_shape[:-1]
@@ -263,48 +241,14 @@ class Inception(object):
         super(Inception, self).__init__(*args, **kwargs)
 
     def _build_inner_model(self, h):
-        dim_order = get_backend()
-        if len(self.input_shape) == 2:
-            if dim_order == 'tf':
-                h = Reshape(self.input_shape + (1,))(h)
-            else:
-                h = Reshape((1, ) + self.input_shape)(h)
-            h = self._build_inception_model()(h)
-        elif len(self.input_shape) == 3:
-            if dim_order == 'tf':
-                images_number = self.input_shape[-1]
-                image_shape = self.input_shape[:-1]
-
-                h = Permute((3, 1, 2))(h)
-                h = Reshape((images_number,) + image_shape + (1,))(h)
-            else:
-                images_number = self.input_shape[0]
-                image_shape = self.input_shape[1:]
-
-                h = Reshape((images_number, 1) + image_shape)(h)
-            h = TimeDistributed(self._build_inception_model())(h)
-        else:
-            raise NotSupportedError()
-
+        h = self._build_inception_model()(h)
         h = Flatten()(h)
         return h
 
     def _build_inception_model(self):
         dim_order = get_backend()
-        if len(self.input_shape) == 2:
-            if dim_order == 'tf':
-                input_layer_shape = self.input_shape + (1,)
-            else:
-                input_layer_shape = (1,) + self.input_shape
-        elif len(self.input_shape) == 3:
-            if dim_order == 'tf':
-                input_layer_shape = self.input_shape[:-1] + (1,)
-            else:
-                input_layer_shape = (1,) + self.input_shape[1:]
-        else:
-            raise NotSupportedError()
 
-        input_layer = Input(shape = input_layer_shape)
+        input_layer = Input(shape = self.input_shape)
         h = input_layer
         
         bn_axis = -1 if dim_order == 'tf' else 1

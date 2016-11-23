@@ -2,7 +2,7 @@ import collections, itertools, numpy, json, logging, pandas
 from scipy.spatial.distance import euclidean
 
 from .base import BaseKerasAgent, split_train_val_replay_gens, MemoryRecord
-from ..keras_utils import get_backend
+from ..keras_utils import get_backend, increase_depth, concat_tensors
 
 logger = logging.getLogger(__name__)
 
@@ -167,6 +167,7 @@ class BaseRankingAgent(BaseKerasAgent):
 
 class BasePointwiseRankingAgent(BaseRankingAgent):
     def _predict_action_probabilities(self, observation):
+        assert len(observation) > 0
         all_observations = numpy.stack([node.viewport for node in observation])
         ratings = self.model.predict(all_observations)
         return { node.cur_id : rating for node, rating in itertools.izip(observation, ratings[:, 0]) }
@@ -181,19 +182,12 @@ class BasePointwiseRankingAgent(BaseRankingAgent):
 
 
 class BasePairwiseRankingAgent(BaseRankingAgent):
-    def __init__(self, *args, **kwargs):
-        super(BasePairwiseRankingAgent, self).__init__(*args, **kwargs)
-        self._comparison_cache = {}
-
     def new_episode(self, *args, **kwargs):
         super(BasePairwiseRankingAgent, self).new_episode(*args, **kwargs)
         self._comparison_cache = {}
 
     def _build_model(self):
-        if get_backend() == 'tf':
-            self.input_shape = self.input_shape + (2,)
-        else:
-            self.input_shape = (2,) + self.input_shape
+        self.input_shape = increase_depth(self.input_shape, 2)
         super(BasePairwiseRankingAgent, self)._build_model()
 
     def _predict_action_probabilities(self, observation):
@@ -204,11 +198,9 @@ class BasePairwiseRankingAgent(BaseRankingAgent):
                                 for i, n1 in enumerate(observation)
                                 for n2 in observation[i+1:]
                                 if not (n1.cur_id, n2.cur_id) in self._comparison_cache
-                                 and not (n2.cur_id, n1.cur_id) in self._comparison_cache]
+                                and not (n2.cur_id, n1.cur_id) in self._comparison_cache]
             if len(new_unique_pairs) > 0:
-                new_samples = numpy.stack([(n1.viewport, n2.viewport) for n1, n2 in new_unique_pairs])
-                if get_backend() == 'tf':
-                    new_samples = numpy.moveaxis(new_samples, 1, -1) # tensorflow is (None, rows, cols, layers)
+                new_samples = numpy.stack([concat_tensors(n1.viewport, n2.viewport) for n1, n2 in new_unique_pairs])
                 new_comparisons_raw = self.model.predict(new_samples)
                 self._comparison_cache.update(((n1.cur_id, n2.cur_id), cmp_value)
                                               for (n1, n2), cmp_value
@@ -237,13 +229,8 @@ class BasePairwiseRankingAgent(BaseRankingAgent):
         sorted_state_ids, stats = sort_episode_steps(episode_states)
         n = len(episode_states)
 
-        if get_backend() == 'tf':
-            reshape = lambda m: numpy.moveaxis(m, 0, -1) # tensorflow is (rows, cols, layers)
-        else:
-            reshape = lambda m: m
-
-        result = [ MemoryRecord(reshape(numpy.stack([s1_info.observation.viewport,
-                                                     s2_info.observation.viewport])),
+        result = [ MemoryRecord(concat_tensors(s1_info.observation.viewport,
+                                               s2_info.observation.viewport),
                                 0,
                                 self.weighting_function(i, n) - self.weighting_function(j, n),
                                 None)
