@@ -1,12 +1,12 @@
-import itertools, numpy, logging
 import gym.spaces
+import logging
+import numpy
 from scipy.spatial.distance import euclidean
-from .base import BasePathFindingByPixelEnv
-# from .utils import line_intersection
-from .utils_compiled import build_distance_map, get_flat_state
-from ..plot_utils import scatter_plot
-from ..keras_utils import get_tensor_reshaper, add_depth
 
+from .base import BasePathFindingByPixelEnv
+from .utils_compiled import build_distance_map, get_flat_state
+from ..keras_utils import get_tensor_reshaper, add_depth
+from ..plot_utils import scatter_plot
 
 logger = logging.getLogger(__name__)
 

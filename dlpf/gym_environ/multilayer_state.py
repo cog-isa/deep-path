@@ -1,4 +1,6 @@
 import gym
+import numpy
+from scipy.spatial.distance import euclidean
 from .base import BasePathFindingByPixelEnv
 
 

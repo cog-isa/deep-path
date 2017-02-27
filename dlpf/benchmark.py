@@ -1,13 +1,16 @@
-import os, glob, numpy, shutil, logging
-from sklearn.cross_validation import ShuffleSplit
+import glob
+import logging
+import numpy
+import os
+
+from sklearn.model_selection import ShuffleSplit
 
 from .base_utils import ensure_dir_exists, copy_files, copy_and_update, \
     load_yaml, load_object_from_yaml
 from .gym_environ import load_environment_from_yaml
+from .keras_utils import LossHistory
 from .run import apply_agent
 from .stats import aggregate_application_base_stats, aggregate_application_run_stats
-from .keras_utils import LossHistory
-
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +23,8 @@ def prepare_evaluation_splits(tasks_dir, to_dir, folds = 3, test_part = 0.3):
     all_task_fnames = numpy.array([fname
                                    for fname in os.listdir(tasks_dir)
                                    if os.path.isfile(os.path.join(tasks_dir, fname))])
-    for fold_i, (train_idx, test_idx) in enumerate(ShuffleSplit(len(all_task_fnames),
-                                                                n_iter = folds,
-                                                                test_size = test_part)):
+    for fold_i, (train_idx, test_idx) in enumerate(
+            ShuffleSplit(n_splits = folds, test_size = test_part).split(len(all_task_fnames))):
         train_dir = os.path.join(to_dir, str(fold_i), TRAIN_DIR)
         ensure_dir_exists(train_dir)
         copy_files(tasks_dir, all_task_fnames[train_idx], train_dir)

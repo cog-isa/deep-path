@@ -2,8 +2,8 @@
 
 import argparse, logging, os, time
 
-#os.environ['KERAS_BACKEND'] = 'theano'
-os.environ['KERAS_BACKEND'] = 'tensorflow'
+os.environ['KERAS_BACKEND'] = 'theano'
+#os.environ['KERAS_BACKEND'] = 'tensorflow'
 #os.environ['THEANO_FLAGS'] = 'device=cpu'
 
 from dlpf.gym_environ import load_environment_from_yaml

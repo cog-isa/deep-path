@@ -1,16 +1,14 @@
-import random, numpy, collections, logging
-from scipy.spatial.distance import euclidean
+import collections
+import logging
+import random
 
-import keras
-from keras.models import Model
-from keras.layers import Dense, Input, Activation, Flatten
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from keras.layers import Dense, Input, Activation
+from keras.models import Model
 from keras.optimizers import Optimizer
 
-from dlpf.base_utils import load_object_from_dict
 from dlpf.keras_utils import get_optimizer, choose_samples_per_epoch
-from .policies import get_action_policy, BaseActionPolicy
-
+from .policies import get_action_policy
 from .training_data_gen import replay_train_data_generator
 
 logger = logging.getLogger(__name__)

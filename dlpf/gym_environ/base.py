@@ -1,9 +1,13 @@
-import logging, numpy
-from scipy.spatial.distance import euclidean
-import gym, gym.spaces, gym.utils
+import logging
+import numpy
 
+import gym
+import gym.spaces
+import gym.utils
+from scipy.spatial.distance import euclidean
+
+from dlpf.base_utils import load_yaml, copy_and_update
 from dlpf.io import TaskSet
-from dlpf.base_utils import load_object_by_name, load_yaml, copy_and_update
 from .policies import get_path_policy, get_task_policy, \
     DEFAULT_PATH_POLICY, DEFAULT_TASK_POLICY
 from .utils import BY_PIXEL_ACTIONS, BY_PIXEL_ACTION_DIFFS
