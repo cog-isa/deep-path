@@ -1,6 +1,6 @@
 #!/bin/bash
 
-YOUR_HASHED_PASSWORD=$(cat jupyter.passwd)
+YOUR_HASHED_PASSWORD=$(cat jupyter/jupyter.passwd)
 
 BIND_PORT="-p 8889:8888"
 if (( $# >= 1 ))

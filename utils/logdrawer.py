@@ -1,5 +1,5 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 plt.interactive(False)
 step = 10
@@ -33,27 +33,23 @@ for i in filtered_reaches:
     else:
         count_w += 1
     if count_e % step == 0 and count_e:
-        finished.append(count_y/count_e)
-        walls.append(count_w/count_e)
+        finished.append(count_y / count_e)
+        walls.append(count_w / count_e)
         count_y, count_e, count_w = 0.0, 0.0, 0.0
-
 
 means = []
 
-for i in range(len(filtered_loss)/epochs):
-    means.append(sum(filtered_loss[i*epochs:(i+1)*epochs])/epochs)
+for i in range(len(filtered_loss) / epochs):
+    means.append(sum(filtered_loss[i * epochs:(i + 1) * epochs]) / epochs)
 
-
-x = np.arange(step, step*(len(means))+1, step)
+x = np.arange(step, step * (len(means)) + 1, step)
 print len(finished), len(walls), len(x)
 plt.plot(x, walls, color='r', lw=1)
 plt.plot(x, means, color='b', lw=2)
 plt.plot(x, finished, color='g', lw=2)
 
-
-
-#x = range(0, 5000, 1)
-#y = [0.05 + 0.95*0.999**i for i in x]
-#y = [10*0.9**i for i in x]
-#plt.plot(x, y, color='b')
+# x = range(0, 5000, 1)
+# y = [0.05 + 0.95*0.999**i for i in x]
+# y = [10*0.9**i for i in x]
+# plt.plot(x, y, color='b')
 plt.show()

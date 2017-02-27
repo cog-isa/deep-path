@@ -1,23 +1,21 @@
-import pickle
-import time
-from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 import gym
-from dlpf.agents import DqnAgent, RandomAgent, FlatAgent, FlatAgentWithLossLogging
-from dlpf.io import *
 from data_shuffle import *
+from hyperopt import fmin, tpe, hp, STATUS_OK, Trials
 
-logger = init_log(out_file = 'import.log', stderr = False)
+from dlpf.io import *
+from dlpf.agents import FlatAgentWithLossLogging
+
+logger = init_log(out_file='import.log', stderr=False)
 to_import = True
 if to_import:
     import_tasks_from_xml_to_compact('data/sample/raw/', 'data/sample/imported/')
     shuffle_imported_paths(to_split=True, val=False)
     shuffle_imported_maps(to_split=True, val=False)
 
-logger = init_log(out_file = 'testbed.log', stderr = False)
-
+logger = init_log(out_file='testbed.log', stderr=False)
 
 env = gym.make('PathFindingByPixel-v3')
-env.configure(tasks_dir = os.path.abspath('data/sample/imported/'), monitor_scale = 10, map_shape = (501, 501))
+env.configure(tasks_dir=os.path.abspath('data/sample/imported/'), monitor_scale=10, map_shape=(501, 501))
 env.monitor.start('data/sample/results/basic_dqn', force=True, seed=0)
 
 
@@ -25,7 +23,7 @@ def to_continue(agent, critical_enlargement):
     history = agent.history.get_flat_array()
     if len(history) < 1000:
         return True
-    elif (sum(history[-100:])-sum(history[-200:-100]))/100 < critical_enlargement:
+    elif (sum(history[-100:]) - sum(history[-200:-100])) / 100 < critical_enlargement:
         return True
     else:
         return False
@@ -33,9 +31,9 @@ def to_continue(agent, critical_enlargement):
 
 def objective(space):
     reslog = []
-    agent = FlatAgentWithLossLogging(state_size = env.observation_space.shape,
-                     number_of_actions = env.action_space.n,
-                     save_name = env.__class__.__name__)
+    agent = FlatAgentWithLossLogging(state_size=env.observation_space.shape,
+                                     number_of_actions=env.action_space.n,
+                                     save_name=env.__class__.__name__)
     agent.build_model(number_of_neurons=space['neurons'],
                       desc_name=space['desc'],
                       loss_fn=space['lf'],
@@ -51,7 +49,7 @@ def objective(space):
         agent.new_episode()
         walls = 0
         for __ in range(max_steps):
-            action, values = agent.act(observation, epsilon=0.05+0.95*0.999**(_))
+            action, values = agent.act(observation, epsilon=0.05 + 0.95 * 0.999 ** (_))
             observation, reward, done, info = env.step(action)
             if info:
                 walls += 1
@@ -59,7 +57,7 @@ def objective(space):
             if done:
                 break
         steps = __
-        #if _ % 100 == 99:
+        # if _ % 100 == 99:
         #    print 'iteration:', _ + 1
         #    agent.plot_layers(to_save='iteration'+str(_+1))
         if _ % 10 == 9:
@@ -80,15 +78,12 @@ def objective(space):
                 break
         steps = __
     if env.heights[env.cur_task.start[0]][env.cur_task.start[1]] > 0:
-        reslog.append(steps+walls/env.heights[env.cur_task.start[0]][env.cur_task.start[1]])
+        reslog.append(steps + walls / env.heights[env.cur_task.start[0]][env.cur_task.start[1]])
     else:
         reslog.append(3)
         print 'something weird happened'
-    print 'result: ', sum(reslog)/len(reslog)
-    return {'loss': sum(reslog)/len(reslog), 'status': STATUS_OK}
-
-
-
+    print 'result: ', sum(reslog) / len(reslog)
+    return {'loss': sum(reslog) / len(reslog), 'status': STATUS_OK}
 
 
 trials = Trials()
@@ -107,5 +102,4 @@ best = fmin(objective,
 
 print best
 for i in trials.trials:
-    print i#['result']
-
+    print i  # ['result']

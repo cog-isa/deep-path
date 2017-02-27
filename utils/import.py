@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
-import argparse, os
+import argparse
 
 from dlpf.io import import_tasks_from_xml_to_compact
 
 if __name__ == "__main__":
     aparser = argparse.ArgumentParser()
-    aparser.add_argument('src_dir', type = str)
-    aparser.add_argument('target_dir', type = str)
+    aparser.add_argument('src_dir', type=str)
+    aparser.add_argument('target_dir', type=str)
 
     args = aparser.parse_args()
 

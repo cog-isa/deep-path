@@ -9,23 +9,23 @@ from dlpf.gym_environ.search_algo import EuclideanAStar
 
 
 def _gen_point(map_shape):
-    return (random.randint(0, map_shape[0] - 1), # randint is inclusive
+    return (random.randint(0, map_shape[0] - 1),  # randint is inclusive
             random.randint(0, map_shape[1] - 1))
 
 
 if __name__ == '__main__':
     aparser = argparse.ArgumentParser()
     aparser.add_argument('-n',
-                         type = int,
-                         default = 10,
-                         help = 'How much tasks to generate')
+                         type=int,
+                         default=10,
+                         help='How much tasks to generate')
     aparser.add_argument('map_fname',
-                         type = str,
-                         help = 'Path to .npz-file with map to generate tasks for')
+                         type=str,
+                         help='Path to .npz-file with map to generate tasks for')
     aparser.add_argument('out_dir',
-                         type = str,
-                         help = 'Where to put tasks')
-    
+                         type=str,
+                         help='Where to put tasks')
+
     args = aparser.parse_args()
 
     path_builder = EuclideanAStar()
