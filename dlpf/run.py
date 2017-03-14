@@ -1,20 +1,22 @@
-import logging, os
-from .base_utils import rename_and_update
-from .stats import StatHolder
+import logging
+import os
+
 from .gym_environ.base import InfoValues
+from .stats import StatHolder
+from .utils.base_utils import rename_and_update
 
 logger = logging.getLogger(__name__)
 
 
 def apply_agent(environment,
                 agent,
-                episodes_number = 3000,
-                max_steps = 100,
-                initial_reward = 0,
-                allow_train = False,
-                train_each_episodes = 10,
-                visualization_dir = None,
-                visualize_each = 10):
+                episodes_number=3000,
+                max_steps=100,
+                initial_reward=0,
+                allow_train=False,
+                train_each_episodes=10,
+                visualization_dir=None,
+                visualize_each=10):
     logger.info('Applying agent %s to env %s in %d episodes, %d max steps, %s training' % (repr(agent),
                                                                                            repr(environment),
                                                                                            episodes_number,
@@ -28,7 +30,7 @@ def apply_agent(environment,
     for episode_i in xrange(1, episodes_number + 1):
         logger.info('Start episode %d' % episode_i)
 
-        new_episode_info = dict(prev_result = prev_result)
+        new_episode_info = dict(prev_result=prev_result)
         rename_and_update(new_episode_info, 'env %s', **environment.get_episode_stat())
         rename_and_update(new_episode_info, 'agent %s', **agent.get_episode_stat())
         stat.new_episode(**new_episode_info)
@@ -39,18 +41,15 @@ def apply_agent(environment,
         reward, done = (initial_reward, False) if allow_train else (None, None)
 
         for step_i in range(max_steps):
-            action = agent.act(observation, reward = reward, done = done)
+            action = agent.act(observation, reward=reward, done=done)
             observation, reward, done, info = environment.step(action)
-            #print '-'*50 #environment.cur_task.local_map
-            #print observation
-            #print reward, observation[4][4], done
-            stat.add_step(reward = reward, info = info)
+            stat.add_step(reward=reward, info=info)
 
             if not allow_train:
                 reward, done = (None, None)
 
             if done:
-                agent.act(observation, reward = reward, done = done)
+                agent.act(observation, reward=reward, done=done)
                 break
 
         if need_visualize and episode_i % visualize_each == 0:

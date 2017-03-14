@@ -7,14 +7,15 @@ from keras.layers import Dense, Input, Activation
 from keras.models import Model
 from keras.optimizers import Optimizer
 
-from dlpf.keras_utils import get_optimizer, choose_samples_per_epoch
+from dlpf.utils.keras_utils import get_optimizer, choose_samples_per_epoch
 from .policies import get_action_policy
 from .training_data_gen import replay_train_data_generator
 
 logger = logging.getLogger(__name__)
 
 
-def split_train_val_replay_gens(episodes, batch_size, actions_number, val_part = 0.1, output_type = 'free_hinge', rand = random.Random()):
+def split_train_val_replay_gens(episodes, batch_size, actions_number, val_part=0.1, output_type='free_hinge',
+                                rand=random.Random()):
     indices = range(len(episodes))
     rand.shuffle(indices)
 
@@ -26,12 +27,12 @@ def split_train_val_replay_gens(episodes, batch_size, actions_number, val_part =
                                         batch_size,
                                         actions_number,
                                         output_type,
-                                        rand = rand),
+                                        rand=rand),
             replay_train_data_generator([episodes[i] for i in val_indices],
                                         batch_size,
                                         actions_number,
                                         output_type,
-                                        rand = rand))
+                                        rand=rand))
 
 
 MemoryRecord = collections.namedtuple('MemoryRecord',
@@ -40,27 +41,27 @@ MemoryRecord = collections.namedtuple('MemoryRecord',
 
 class BaseKerasAgent(object):
     def __init__(self,
-                 input_shape = None,
-                 number_of_actions = 1,
-                 action_policy = get_action_policy(),
-                 max_memory_size = 250,
-                 output_activation = 'linear',
-                 loss = 'mean_squared_error',
-                 optimizer = get_optimizer(),
-                 model_metrics = [],
-                 model_callbacks = [],
-                 epoch_number = 100,
-                 passes_over_train_data = 2,
-                 validation_part = 0.1,
-                 batch_size = 32,
-                 keras_verbose = 0,
-                 train_gen_processes_number = 4,
-                 train_gen_queue_size = 100,
-                 early_stopping_patience = 20,
-                 reduce_lr_on_plateau_factor = 0.2,
-                 reduce_lr_on_plateau_patience = 10,
-                 train_data_output_type = 'free_hinge',
-                 split_rand = random.Random()):
+                 input_shape=None,
+                 number_of_actions=1,
+                 action_policy=get_action_policy(),
+                 max_memory_size=250,
+                 output_activation='linear',
+                 loss='mean_squared_error',
+                 optimizer=get_optimizer(),
+                 model_metrics=[],
+                 model_callbacks=[],
+                 epoch_number=100,
+                 passes_over_train_data=2,
+                 validation_part=0.1,
+                 batch_size=32,
+                 keras_verbose=0,
+                 train_gen_processes_number=4,
+                 train_gen_queue_size=100,
+                 early_stopping_patience=20,
+                 reduce_lr_on_plateau_factor=0.2,
+                 reduce_lr_on_plateau_patience=10,
+                 train_data_output_type='free_hinge',
+                 split_rand=random.Random()):
         self.input_shape = input_shape
         self.number_of_actions = number_of_actions
         self.action_policy = get_action_policy(action_policy) \
@@ -94,33 +95,33 @@ class BaseKerasAgent(object):
 
         self.goal = None
 
-        self.model_callbacks.append(ReduceLROnPlateau(monitor = 'val_loss',
-                                                      factor = self.reduce_lr_on_plateau_factor,
-                                                      patience = self.reduce_lr_on_plateau_patience,
-                                                      verbose = self.keras_verbose,
-                                                      mode = 'min'))
-        self.model_callbacks.append(EarlyStopping(monitor = 'val_loss',
-                                                  patience = self.early_stopping_patience,
-                                                  verbose = self.keras_verbose,
-                                                  mode = 'min'))
+        self.model_callbacks.append(ReduceLROnPlateau(monitor='val_loss',
+                                                      factor=self.reduce_lr_on_plateau_factor,
+                                                      patience=self.reduce_lr_on_plateau_patience,
+                                                      verbose=self.keras_verbose,
+                                                      mode='min'))
+        self.model_callbacks.append(EarlyStopping(monitor='val_loss',
+                                                  patience=self.early_stopping_patience,
+                                                  verbose=self.keras_verbose,
+                                                  mode='min'))
 
         self.memory = []
         self.prev_step_info = None
-        
+
         self._build_model()
 
     ##############################################################
     ###################### Basic agent logic #####################
     ##############################################################
     def _build_model(self):
-        input_layer = Input(shape = self.input_shape)
+        input_layer = Input(shape=self.input_shape)
         inner_model = self._build_inner_model(input_layer)
         last_layer = Dense(self.number_of_actions)(inner_model)
         output_layer = Activation(self.output_activation)(last_layer)
         self.model = Model(input_layer, output_layer)
         self.model.compile(self.optimizer,
-                           loss = self.loss,
-                           metrics = self.model_metrics)
+                           loss=self.loss,
+                           metrics=self.model_metrics)
         self.model.summary()
 
     def new_episode(self, goal):
@@ -130,20 +131,20 @@ class BaseKerasAgent(object):
         self.action_policy.new_episode()
         self.goal = goal
 
-    def act(self, observation, reward = None, done = None):
-        if not reward is None and not self.prev_step_info is None: # that means that we can learn
+    def act(self, observation, reward=None, done=None):
+        if reward is not None and self.prev_step_info is not None:  # that means that we can learn
             self.prev_step_info['reward'] = reward
             self._update_memory(self.memory[-1], **self.prev_step_info)
 
         action_probabilities = self._predict_action_probabilities(observation)
         action = self.action_policy.choose_action(action_probabilities)
 
-        if not reward is None: # that means that we can learn
-            self.prev_step_info = dict(observation = observation,
-                                       action_probabilities = action_probabilities,
-                                       action = action,
-                                       reward = reward,
-                                       done = done)
+        if not reward is None:  # that means that we can learn
+            self.prev_step_info = dict(observation=observation,
+                                       action_probabilities=action_probabilities,
+                                       action=action,
+                                       reward=reward,
+                                       done=done)
 
         return action
 
@@ -163,13 +164,13 @@ class BaseKerasAgent(object):
         self.model.fit_generator(train_gen,
                                  train_samples_per_epoch,
                                  self.epoch_number,
-                                 verbose = self.keras_verbose,
-                                 callbacks = self.model_callbacks,
-                                 validation_data = val_gen,
-                                 nb_val_samples = val_samples_per_epoch,
-                                 max_q_size = self.train_gen_queue_size,
-                                 nb_worker = self.train_gen_processes_number,
-                                 pickle_safe = False)
+                                 verbose=self.keras_verbose,
+                                 callbacks=self.model_callbacks,
+                                 validation_data=val_gen,
+                                 nb_val_samples=val_samples_per_epoch,
+                                 max_q_size=self.train_gen_queue_size,
+                                 nb_worker=self.train_gen_processes_number,
+                                 pickle_safe=False)
 
     def get_episode_stat(self):
         return {}
@@ -183,7 +184,8 @@ class BaseKerasAgent(object):
     def _init_memory_for_new_episode(self):
         return []
 
-    def _update_memory(self, episode_memory, observation = None, action_probabilities = None, action = None, reward = None, done = None):
+    def _update_memory(self, episode_memory, observation=None, action_probabilities=None, action=None, reward=None,
+                       done=None):
         episode_memory.append(MemoryRecord(observation, action, reward, done))
 
     def _gen_train_val_data_from_memory(self):
@@ -191,9 +193,9 @@ class BaseKerasAgent(object):
         return split_train_val_replay_gens(self.memory,
                                            self.batch_size,
                                            self.number_of_actions,
-                                           val_part = self.validation_part,
-                                           output_type = self.train_data_output_type,
-                                           rand = self.split_rand)
+                                           val_part=self.validation_part,
+                                           output_type=self.train_data_output_type,
+                                           rand=self.split_rand)
 
     ##############################################################
     ################ Methods mandatory to implement ##############

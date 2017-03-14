@@ -1,16 +1,16 @@
-import keras, logging, itertools, numpy
+import itertools
+import logging
+import numpy
+
 import keras.backend as K
-from keras.models import Model
-from keras.layers import Dense, Flatten, Dropout, Reshape, \
-    Convolution2D, MaxPooling2D, AveragePooling2D, \
+from keras.layers import Dense, Flatten, Dropout, Convolution2D, MaxPooling2D, AveragePooling2D, \
     BatchNormalization, Activation, Lambda, Reshape, \
     Permute, TimeDistributed, merge, Input
-from keras.applications.vgg16 import VGG16
+from keras.models import Model
 
-from ..keras_utils import get_backend, add_depth, get_depth
-from ..base_utils import load_object_from_dict
 from .training_data_gen import scale_tensors
-
+from ..utils.base_utils import load_object_from_dict
+from ..utils.keras_utils import get_backend, add_depth, get_depth
 
 logger = logging.getLogger()
 
@@ -23,9 +23,9 @@ class OneLayer(object):
 
 class TwoLayer(object):
     def __init__(self,
-                 hidden_size = 10,
-                 hidden_activation = 'relu',
-                 dropout = 0.8,
+                 hidden_size=10,
+                 hidden_activation='relu',
+                 dropout=0.8,
                  *args, **kwargs):
         self.hidden_size = hidden_size
         self.hidden_activation = hidden_activation
@@ -35,24 +35,24 @@ class TwoLayer(object):
     def _build_inner_model(self, input_layer):
         h = Flatten()(input_layer)
         h = Dense(self.hidden_size,
-                  activation = self.hidden_activation)(h)
+                  activation=self.hidden_activation)(h)
         h = Dropout(self.dropout)(h)
         return h
 
 
 class ConvAndDense(object):
     def __init__(self,
-                 hidden_sizes = [10],
-                 hidden_activations = ['relu'],
-                 hidden_dropouts = [0.2],
-                 hidden_batchnorm = [False],
-                 conv_cores = [10],
-                 conv_core_sizes = [4],
-                 conv_strides = [2],
-                 conv_activations = ['relu'],
-                 conv_dropouts = [0.2],
-                 conv_pooling = ['max'],
-                 conv_batchnorm = [False],
+                 hidden_sizes=[10],
+                 hidden_activations=['relu'],
+                 hidden_dropouts=[0.2],
+                 hidden_batchnorm=[False],
+                 conv_cores=[10],
+                 conv_core_sizes=[4],
+                 conv_strides=[2],
+                 conv_activations=['relu'],
+                 conv_dropouts=[0.2],
+                 conv_pooling=['max'],
+                 conv_batchnorm=[False],
                  *args, **kwargs):
         self.hidden_sizes = hidden_sizes
         self.hidden_activations = hidden_activations
@@ -81,11 +81,11 @@ class ConvAndDense(object):
             h = Convolution2D(cores,
                               core_size,
                               core_size,
-                              subsample = (stride, stride))(h)
+                              subsample=(stride, stride))(h)
             if not dropout is None and 0 < dropout < 1:
                 h = Dropout(dropout)(h)
             if bn:
-                h = BatchNormalization(axis = bn_axis)(h)
+                h = BatchNormalization(axis=bn_axis)(h)
             if pool in ('max', 'min'):
                 h = (MaxPooling2D if pool == 'max' else AveragePooling2D)()(h)
             h = Activation(act)(h)
@@ -105,14 +105,16 @@ class ConvAndDense(object):
         return h
 
 
-DEFAULT_DEEP_NESTED_MODEL = { 'ctor' : 'keras.applications.vgg16.VGG16',
-                             'kwargs' : { 'include_top' : False,
-                                         'weights' : 'imagenet' } }
+DEFAULT_DEEP_NESTED_MODEL = {'ctor': 'keras.applications.vgg16.VGG16',
+                             'kwargs': {'include_top': False,
+                                        'weights': 'imagenet'}}
 DEFAULT_SCALE_TARGET_SHAPE = (224, 224)
+
+
 class DeepPreproc(object):
     def __init__(self,
-                 nested_model = DEFAULT_DEEP_NESTED_MODEL,
-                 scale_target_shape = DEFAULT_SCALE_TARGET_SHAPE,
+                 nested_model=DEFAULT_DEEP_NESTED_MODEL,
+                 scale_target_shape=DEFAULT_SCALE_TARGET_SHAPE,
                  *args, **kwargs):
         self.nested_model = nested_model
         self.scale_target_shape = scale_target_shape
@@ -126,7 +128,8 @@ class DeepPreproc(object):
         else:
             raise NotImplementedError()
 
-        self.scale_factor = (1, ) + tuple(numpy.array(self.input_shape, dtype = 'float') / numpy.array(self.src_input_shape))
+        self.scale_factor = (1,) + tuple(
+            numpy.array(self.input_shape, dtype='float') / numpy.array(self.src_input_shape))
 
         super(DeepPreproc, self)._build_model()
 
@@ -148,11 +151,11 @@ class DeepPreproc(object):
                 h = Lambda(lambda t: K.repeat_elements(t, 3, 2))(h)
             h = TimeDistributed(load_object_from_dict(self.nested_model))(h)
         else:
-            raise NotSupportedError()
+            raise ValueError()
 
         h = Flatten()(h)
-        h = Dense(4096, activation = 'relu')(h)
-        h = Dense(4096, activation = 'relu')(h)
+        h = Dense(4096, activation='relu')(h)
+        h = Dense(4096, activation='relu')(h)
 
         return h
 
@@ -162,81 +165,85 @@ class DeepPreproc(object):
 
 
 def inception_conv(input_tensor, n, bn_axis, filters1, filters2, filters31, filters32, filters41, filters42, filters43):
-    path1 = Convolution2D(filters1, 1, 1, border_mode = 'same')(input_tensor)
-    path1 = BatchNormalization(mode = 2, axis = bn_axis)(path1)
+    path1 = Convolution2D(filters1, 1, 1, border_mode='same')(input_tensor)
+    path1 = BatchNormalization(mode=2, axis=bn_axis)(path1)
     path1 = Activation('relu')(path1)
 
-    path2 = MaxPooling2D(strides = (1, 1), border_mode = 'same')(input_tensor)
-    path2 = Convolution2D(filters2, 1, 1, border_mode = 'same')(path2)
-    path2 = BatchNormalization(mode = 2, axis = bn_axis)(path2)
+    path2 = MaxPooling2D(strides=(1, 1), border_mode='same')(input_tensor)
+    path2 = Convolution2D(filters2, 1, 1, border_mode='same')(path2)
+    path2 = BatchNormalization(mode=2, axis=bn_axis)(path2)
     path2 = Activation('relu')(path2)
 
-    path3 = Convolution2D(filters31, 1, 1, border_mode = 'same')(input_tensor)
-    path3 = BatchNormalization(mode = 2, axis = bn_axis)(path3)
+    path3 = Convolution2D(filters31, 1, 1, border_mode='same')(input_tensor)
+    path3 = BatchNormalization(mode=2, axis=bn_axis)(path3)
     path3 = Activation('relu')(path3)
-    path3 = Convolution2D(filters32, n, 1, border_mode = 'same')(path3)
-    path3 = BatchNormalization(mode = 2, axis = bn_axis)(path3)
-    path3 = Convolution2D(filters32, 1, n, border_mode = 'same')(path3)
-    path3 = BatchNormalization(mode = 2, axis = bn_axis)(path3)
+    path3 = Convolution2D(filters32, n, 1, border_mode='same')(path3)
+    path3 = BatchNormalization(mode=2, axis=bn_axis)(path3)
+    path3 = Convolution2D(filters32, 1, n, border_mode='same')(path3)
+    path3 = BatchNormalization(mode=2, axis=bn_axis)(path3)
     path3 = Activation('relu')(path3)
 
-    path4 = Convolution2D(filters41, 1, 1, border_mode = 'same')(input_tensor)
-    path4 = BatchNormalization(mode = 2, axis = bn_axis)(path4)
+    path4 = Convolution2D(filters41, 1, 1, border_mode='same')(input_tensor)
+    path4 = BatchNormalization(mode=2, axis=bn_axis)(path4)
     path4 = Activation('relu')(path4)
-    path4 = Convolution2D(filters42, n, 1, border_mode = 'same')(path4)
-    path4 = BatchNormalization(mode = 2, axis = bn_axis)(path4)
-    path4 = Convolution2D(filters42, 1, n, border_mode = 'same')(path4)
-    path4 = BatchNormalization(mode = 2, axis = bn_axis)(path4)
+    path4 = Convolution2D(filters42, n, 1, border_mode='same')(path4)
+    path4 = BatchNormalization(mode=2, axis=bn_axis)(path4)
+    path4 = Convolution2D(filters42, 1, n, border_mode='same')(path4)
+    path4 = BatchNormalization(mode=2, axis=bn_axis)(path4)
     path4 = Activation('relu')(path4)
-    path4 = Convolution2D(filters43, n, 1, border_mode = 'same')(path4)
-    path4 = BatchNormalization(mode = 2, axis = bn_axis)(path4)
-    path4 = Convolution2D(filters43, 1, n, border_mode = 'same')(path4)
-    path4 = BatchNormalization(mode = 2, axis = bn_axis)(path4)
+    path4 = Convolution2D(filters43, n, 1, border_mode='same')(path4)
+    path4 = BatchNormalization(mode=2, axis=bn_axis)(path4)
+    path4 = Convolution2D(filters43, 1, n, border_mode='same')(path4)
+    path4 = BatchNormalization(mode=2, axis=bn_axis)(path4)
     path4 = Activation('relu')(path4)
-    
-    return merge([path1, path2, path3, path4], mode = 'concat', concat_axis = -1)
+
+    return merge([path1, path2, path3, path4], mode='concat', concat_axis=-1)
 
 
 def inception_subsample(input_tensor, n, bn_axis, filters11, filters12, filters31, filters32, filters33):
-    path1 = MaxPooling2D(strides = (2, 2), border_mode = 'same')(input_tensor)
+    path1 = MaxPooling2D(strides=(2, 2), border_mode='same')(input_tensor)
 
-    path2 = Convolution2D(filters11, 1, 1, border_mode = 'same')(input_tensor)
-    path2 = BatchNormalization(mode = 2, axis = bn_axis)(path2)
+    path2 = Convolution2D(filters11, 1, 1, border_mode='same')(input_tensor)
+    path2 = BatchNormalization(mode=2, axis=bn_axis)(path2)
     path2 = Activation('relu')(path2)
-    path2 = Convolution2D(filters12, n, 1, subsample = (2, 1), border_mode = 'same')(path2)
-    path2 = BatchNormalization(mode = 2, axis = bn_axis)(path2)
-    path2 = Convolution2D(filters12, 1, n, subsample = (1, 2), border_mode = 'same')(path2)
-    path2 = BatchNormalization(mode = 2, axis = bn_axis)(path2)
+    path2 = Convolution2D(filters12, n, 1, subsample=(2, 1), border_mode='same')(path2)
+    path2 = BatchNormalization(mode=2, axis=bn_axis)(path2)
+    path2 = Convolution2D(filters12, 1, n, subsample=(1, 2), border_mode='same')(path2)
+    path2 = BatchNormalization(mode=2, axis=bn_axis)(path2)
     path2 = Activation('relu')(path2)
 
-    path3 = Convolution2D(filters31, 1, 1, border_mode = 'same')(input_tensor)
-    path3 = BatchNormalization(mode = 2, axis = bn_axis)(path3)
+    path3 = Convolution2D(filters31, 1, 1, border_mode='same')(input_tensor)
+    path3 = BatchNormalization(mode=2, axis=bn_axis)(path3)
     path3 = Activation('relu')(path3)
-    path3 = Convolution2D(filters32, n, 1, border_mode = 'same')(path3)
-    path3 = BatchNormalization(mode = 2, axis = bn_axis)(path3)
-    path3 = Convolution2D(filters32, 1, n, border_mode = 'same')(path3)
-    path3 = BatchNormalization(mode = 2, axis = bn_axis)(path3)
+    path3 = Convolution2D(filters32, n, 1, border_mode='same')(path3)
+    path3 = BatchNormalization(mode=2, axis=bn_axis)(path3)
+    path3 = Convolution2D(filters32, 1, n, border_mode='same')(path3)
+    path3 = BatchNormalization(mode=2, axis=bn_axis)(path3)
     path3 = Activation('relu')(path3)
-    path3 = Convolution2D(filters33, n, 1, subsample = (2, 1), border_mode = 'same')(path3)
-    path3 = BatchNormalization(mode = 2, axis = bn_axis)(path3)
-    path3 = Convolution2D(filters33, 1, n, subsample = (1, 2), border_mode = 'same')(path3)
-    path3 = BatchNormalization(mode = 2, axis = bn_axis)(path3)
+    path3 = Convolution2D(filters33, n, 1, subsample=(2, 1), border_mode='same')(path3)
+    path3 = BatchNormalization(mode=2, axis=bn_axis)(path3)
+    path3 = Convolution2D(filters33, 1, n, subsample=(1, 2), border_mode='same')(path3)
+    path3 = BatchNormalization(mode=2, axis=bn_axis)(path3)
     path3 = Activation('relu')(path3)
-    
-    return merge([path1, path2, path3], mode = 'concat', concat_axis = -1)
+
+    return merge([path1, path2, path3], mode='concat', concat_axis=-1)
 
 
 DEFAULT_INCEPTION_STRUCTURE = [
-    dict(type = 'conv', n = 3, filters1 = 64, filters2 = 64, filters31 = 64, filters32 = 64, filters41 = 64, filters42 = 64, filters43 = 64),
-    dict(type = 'conv', n = 3, filters1 = 64, filters2 = 64, filters31 = 64, filters32 = 64, filters41 = 64, filters42 = 64, filters43 = 64),
-    dict(type = 'conv', n = 3, filters1 = 64, filters2 = 64, filters31 = 64, filters32 = 64, filters41 = 64, filters42 = 64, filters43 = 64),
-    dict(type = 'subs', n = 3, filters11 = 64, filters12 = 64, filters31 = 64, filters32 = 64, filters33 = 64),
-    dict(type = 'subs', n = 3, filters11 = 64, filters12 = 64, filters31 = 64, filters32 = 64, filters33 = 64)
+    dict(type='conv', n=3, filters1=64, filters2=64, filters31=64, filters32=64, filters41=64, filters42=64,
+         filters43=64),
+    dict(type='conv', n=3, filters1=64, filters2=64, filters31=64, filters32=64, filters41=64, filters42=64,
+         filters43=64),
+    dict(type='conv', n=3, filters1=64, filters2=64, filters31=64, filters32=64, filters41=64, filters42=64,
+         filters43=64),
+    dict(type='subs', n=3, filters11=64, filters12=64, filters31=64, filters32=64, filters33=64),
+    dict(type='subs', n=3, filters11=64, filters12=64, filters31=64, filters32=64, filters33=64)
 ]
+
 
 class Inception(object):
     def __init__(self,
-                 structure = DEFAULT_INCEPTION_STRUCTURE,
+                 structure=DEFAULT_INCEPTION_STRUCTURE,
                  *args, **kwargs):
         self.structure = structure
         super(Inception, self).__init__(*args, **kwargs)
@@ -249,9 +256,9 @@ class Inception(object):
     def _build_inception_model(self):
         dim_order = get_backend()
 
-        input_layer = Input(shape = self.input_shape)
+        input_layer = Input(shape=self.input_shape)
         h = input_layer
-        
+
         bn_axis = -1 if dim_order == 'tf' else 1
         for block_info in self.structure:
             block_type = block_info['type']

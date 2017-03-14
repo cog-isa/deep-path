@@ -1,17 +1,22 @@
-import collections, itertools, numpy, json, logging, pandas
+import collections
+import itertools
+import logging
+import numpy
+import pandas
+
 from scipy.spatial.distance import euclidean
 
 from .base import BaseKerasAgent, split_train_val_replay_gens, MemoryRecord
-from ..keras_utils import get_backend, increase_depth, concat_tensors
+from ..utils.keras_utils import increase_depth, concat_tensors
 
 logger = logging.getLogger(__name__)
 
-
 _PERCENTILES = range(20, 101, 20)
+
 
 def sort_episode_steps(episode):
     # where did we go from each state?
-    forward_links = { step.observation.cur_id : set() for step in episode.viewvalues() }
+    forward_links = {step.observation.cur_id: set() for step in episode.viewvalues()}
     for step in episode.viewvalues():
         if not step.observation.prev_id is None:
             forward_links[step.observation.prev_id].add(step.observation.cur_id)
@@ -25,9 +30,9 @@ def sort_episode_steps(episode):
     chains = collections.defaultdict(dict)
     for state_id in queue:
         chains[state_id][state_id] = 0
-    winning_chains = { state_id
+    winning_chains = {state_id
                       for state_id in queue
-                      if episode[state_id].observation.goal }
+                      if episode[state_id].observation.goal}
     unique_chain_ids = set(chains.viewkeys())
     winning_chains_number = len(winning_chains)
 
@@ -46,16 +51,16 @@ def sort_episode_steps(episode):
     # * not winning
     # * have at least two nodes after last bifurcation (one really visited and one just considered)
     # This is simply the list of unique nodes that are previous for chain ends
-    terminated_chains = set() # identifiers of last visited nodes (last bifurcation points)
+    terminated_chains = set()  # identifiers of last visited nodes (last bifurcation points)
     for state_id in unique_chain_ids:
         prev_id = episode[state_id].observation.prev_id
         if not prev_id is None:
             terminated_chains.add(prev_id)
 
     # also, calculate quantiles of ratio chain_len / winning_chain_len
-    initial_states = { node.observation.cur_id
+    initial_states = {node.observation.cur_id
                       for node in episode.viewvalues()
-                      if node.observation.prev_id is None }
+                      if node.observation.prev_id is None}
     winning_chain_size = float(max(chains[init_state_id][win_chain_id]
                                    for init_state_id in initial_states
                                    for win_chain_id in winning_chains))
@@ -65,8 +70,8 @@ def sort_episode_steps(episode):
     chain_length_percentiles = numpy.percentile(chain_length_ratios,
                                                 _PERCENTILES)
 
-    stats = {'winning_chains_number' : winning_chains_number,
-             'terminated_chains_ratio' : float(len(terminated_chains)) / len(unique_chain_ids) }
+    stats = {'winning_chains_number': winning_chains_number,
+             'terminated_chains_ratio': float(len(terminated_chains)) / len(unique_chain_ids)}
     stats.update(('chain_length_percentile_%.2f' % perc, perc_value)
                  for perc, perc_value in itertools.izip(_PERCENTILES, chain_length_percentiles))
 
@@ -78,7 +83,7 @@ def sort_episode_steps(episode):
     def compare_states(s1, s2):
         chains1 = chains[s1]
         chains2 = chains[s2]
-        common_chain_ids = { k for k in chains1.viewkeys() if k in chains2 }
+        common_chain_ids = {k for k in chains1.viewkeys() if k in chains2}
         if len(winning_chains & common_chain_ids) > 0:
             common_winning = True
             common_chain_ids.intersection_update(winning_chains)
@@ -89,30 +94,30 @@ def sort_episode_steps(episode):
             if common_winning:
                 i1 = min(chains1[k] for k in common_chain_ids)
                 i2 = min(chains2[k] for k in common_chain_ids)
-                return i2 - i1 # closer to the end of winning chain (i is less) - bigger the state
+                return i2 - i1  # closer to the end of winning chain (i is less) - bigger the state
             else:
                 i1 = max(chains1[k] for k in common_chain_ids)
                 i2 = max(chains2[k] for k in common_chain_ids)
-                return i1 - i2 # farther from the end of terminated chain (i is more) - bigger the state
+                return i1 - i2  # farther from the end of terminated chain (i is more) - bigger the state
 
         if len(winning_chains.intersection(chains1.viewkeys())) > 0:
-            return 1 # c1 should go right
+            return 1  # c1 should go right
 
         if len(winning_chains.intersection(chains2.viewkeys())) > 0:
-            return -1 # c2 should go right
+            return -1  # c2 should go right
 
         return 0
-        #d1 = min_distance_to_winning_state(s1)
-        #d2 = min_distance_to_winning_state(s2)
-        #if d1 == d2:
+        # d1 = min_distance_to_winning_state(s1)
+        # d2 = min_distance_to_winning_state(s2)
+        # if d1 == d2:
         #    return 0
-        #elif d2 > d1:
+        # elif d2 > d1:
         #    return 1
-        #else:
+        # else:
         #    return -1
 
     result = chains.keys()
-    result.sort(cmp = compare_states)
+    result.sort(cmp=compare_states)
     return result, stats
 
 
@@ -129,19 +134,21 @@ class EpisodeWithPreparedInfo(object):
 def linear_weight(i, n):
     return float(i) / n
 
+
 def cubic_weight(i, n):
     return (float(i) / n) ** 3
 
+
 _WEIGHTING_FUNCTIONS = {
-    'linear' : linear_weight,
-    'cubic' : cubic_weight
+    'linear': linear_weight,
+    'cubic': cubic_weight
 }
 DEFAULT_WEIGHTING = 'linear'
 
 
 class BaseRankingAgent(BaseKerasAgent):
     def __init__(self,
-                 weighting_function = DEFAULT_WEIGHTING,
+                 weighting_function=DEFAULT_WEIGHTING,
                  *args, **kwargs):
         super(BaseRankingAgent, self).__init__(*args, **kwargs)
         self.number_of_actions = 1
@@ -153,9 +160,10 @@ class BaseRankingAgent(BaseKerasAgent):
     def _init_memory_for_new_episode(self):
         return EpisodeWithPreparedInfo()
 
-    def _update_memory(self, episode_memory, observation = None, action_probabilities = None, action = None, reward = None, done = None):
-        #logger.info('Done %r' % done)
-        #logger.info('obs %s' % [(n.cur_id, n.goal) for n in observation])
+    def _update_memory(self, episode_memory, observation=None, action_probabilities=None, action=None, reward=None,
+                       done=None):
+        # logger.info('Done %r' % done)
+        # logger.info('obs %s' % [(n.cur_id, n.goal) for n in observation])
         for node in observation:
             episode_memory.all_states[node.cur_id] = MemoryRecord(node, None, None, done)
 
@@ -170,13 +178,13 @@ class BaseRankingAgent(BaseKerasAgent):
         return split_train_val_replay_gens([episode.prepared_info for episode in self.memory],
                                            self.batch_size,
                                            self.number_of_actions,
-                                           val_part = self.validation_part,
-                                           output_type = self.train_data_output_type,
-                                           rand = self.split_rand)
+                                           val_part=self.validation_part,
+                                           output_type=self.train_data_output_type,
+                                           rand=self.split_rand)
 
     def get_episode_stat(self):
         result = super(BaseRankingAgent, self).get_episode_stat()
-        result.update(pandas.DataFrame(data = self._chains_stat).mean(axis = 0))
+        result.update(pandas.DataFrame(data=self._chains_stat).mean(axis=0))
         return result
 
 
@@ -187,14 +195,14 @@ class BasePointwiseRankingAgent(BaseRankingAgent):
 
         all_observations = numpy.stack([node.viewport for node in observation])
         ratings = self.model.predict(all_observations)
-        return { node.cur_id : rating for node, rating in itertools.izip(observation, ratings[:, 0]) }
+        return {node.cur_id: rating for node, rating in itertools.izip(observation, ratings[:, 0])}
 
     def _prepare_episode_info(self, episode_states):
         sorted_state_ids, stats = sort_episode_steps(episode_states)
         n = len(sorted_state_ids)
         result = [MemoryRecord(state_info.observation.viewport, 0, self.weighting_function(i, n), state_info.done)
                   for i, state_id in enumerate(sorted_state_ids)
-                  for state_info in [episode_states[state_id]] ]
+                  for state_info in [episode_states[state_id]]]
         return result, stats
 
 
@@ -213,7 +221,7 @@ class BasePairwiseRankingAgent(BaseRankingAgent):
         if len(observation) > 1:
             new_unique_pairs = [(n1, n2)
                                 for i, n1 in enumerate(observation)
-                                for n2 in observation[i+1:]
+                                for n2 in observation[i + 1:]
                                 if not (n1.cur_id, n2.cur_id) in self._comparison_cache
                                 and not (n2.cur_id, n1.cur_id) in self._comparison_cache]
             if len(new_unique_pairs) > 0:
@@ -224,12 +232,12 @@ class BasePairwiseRankingAgent(BaseRankingAgent):
                                               in itertools.izip(new_unique_pairs,
                                                                 new_comparisons_raw[:, 0]))
 
-            result.sort(cmp = self._compare_with_cache)
+            result.sort(cmp=self._compare_with_cache)
 
         n = len(result)
-        return { state_id : self.weighting_function(i, n)
+        return {state_id: self.weighting_function(i, n)
                 for i, state_id
-                in enumerate(result) }
+                in enumerate(result)}
 
     def _compare_with_cache(self, s1_id, s2_id):
         result = self._comparison_cache.get((s1_id, s2_id), None)
@@ -246,21 +254,21 @@ class BasePairwiseRankingAgent(BaseRankingAgent):
         sorted_state_ids, stats = sort_episode_steps(episode_states)
         n = len(episode_states)
 
-        result = [ MemoryRecord(concat_tensors(s1_info.observation.viewport,
-                                               s2_info.observation.viewport),
-                                0,
-                                self.weighting_function(i, n) - self.weighting_function(j, n),
-                                None)
+        result = [MemoryRecord(concat_tensors(s1_info.observation.viewport,
+                                              s2_info.observation.viewport),
+                               0,
+                               self.weighting_function(i, n) - self.weighting_function(j, n),
+                               None)
                   for i, s1_id in enumerate(sorted_state_ids)
                   for j, s2_id in enumerate(sorted_state_ids)
-                  for s1_info in [ episode_states[s1_id] ]
-                  for s2_info in [ episode_states[s2_id] ] ]
+                  for s1_info in [episode_states[s1_id]]
+                  for s2_info in [episode_states[s2_id]]]
         return result, stats
 
 
 class SimpleMaxValueRankingAgent(BaseRankingAgent):
     def _predict_action_probabilities(self, observation):
-        return { node.cur_id : -euclidean(node.cur_id, self.goal) for node in observation }
+        return {node.cur_id: -euclidean(node.cur_id, self.goal) for node in observation}
 
     def _prepare_episode_info(self, episode_states):
         sorted_state_ids, stats = sort_episode_steps(episode_states)

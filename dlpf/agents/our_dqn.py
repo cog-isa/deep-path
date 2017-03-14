@@ -1,17 +1,12 @@
+import logging
+
 from scipy.ndimage.interpolation import zoom
 
-import keras, logging, itertools
-import keras.backend as K
-from keras.layers import Dense, Flatten, Dropout, Reshape, \
-    Convolution2D, MaxPooling2D, AveragePooling2D, \
-    BatchNormalization, Activation
-
+from .architectures import OneLayer, TwoLayer, ConvAndDense, DeepPreproc, \
+    Inception
 from .base import BaseStandaloneKerasAgent
 from .ranking import BasePointwiseRankingAgent, BasePairwiseRankingAgent, \
     SimpleMaxValueRankingAgent
-from .architectures import OneLayer, TwoLayer, ConvAndDense, DeepPreproc, \
-    Inception
-
 
 logger = logging.getLogger()
 

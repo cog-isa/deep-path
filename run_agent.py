@@ -54,18 +54,18 @@ if __name__ == '__main__':
 
     args = aparser.parse_args()
 
-    if args._id:
-        args.output = os.path.join(args.output, args._id)
-    ensure_dir_exists(args.output)
-
     logger = init_log(stderr=True,
                       level=LOGGING_LEVELS[args.level],
                       out_file=os.path.join(args.output, 'run_agent.log'))
 
-    env = load_environment_from_yaml(args.env)
-
+    if args._id:
+        args.output = os.path.join(args.output, args._id)
+    ensure_dir_exists(args.output)
     try_assign_theano_on_free_gpu()
     keras_hist = LossHistory()
+
+    env = load_environment_from_yaml(args.env)
+
     agent = load_object_from_yaml(args.agent,
                                   input_shape=env.observation_space.shape,
                                   number_of_actions=env.action_space.n,
@@ -100,4 +100,3 @@ if __name__ == '__main__':
                        **stats[0].scores)
     create_scores_file(os.path.join(args.output, 'scores.js'),
                        **stats[0].scores)
-    time.sleep(1)

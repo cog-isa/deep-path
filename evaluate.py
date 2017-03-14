@@ -33,14 +33,13 @@ if __name__ == '__main__':
 
     args = aparser.parse_args()
 
-    if args._id:
-        args.output = os.path.join(args.output, args._id)
-    ensure_dir_exists(args.output)
-
     logger = init_log(stderr=True,
                       level=LOGGING_LEVELS[args.level],
                       out_file=os.path.join(args.output, 'evaluate.log'))
 
+    if args._id:
+        args.output = os.path.join(args.output, args._id)
+    ensure_dir_exists(args.output)
     try_assign_theano_on_free_gpu()
 
     with Profiler(logger):
