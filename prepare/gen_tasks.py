@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-import argparse, os, random
+import argparse
+import os
+import random
 
-os.environ['KERAS_BACKEND'] = 'theano'
-
-from dlpf.io import load_map_from_compact, PathFindingTask, save_to_compact
 from dlpf.gym_environ.search_algo import EuclideanAStar
+from dlpf.utils.io import load_map_from_compact, PathFindingTask, save_to_compact
 
 
 def _gen_point(map_shape):

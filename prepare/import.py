@@ -2,7 +2,7 @@
 
 import argparse
 
-from dlpf.io import import_tasks_from_xml_to_compact
+from dlpf.utils.io import import_tasks_from_xml_to_compact
 
 if __name__ == "__main__":
     aparser = argparse.ArgumentParser()

@@ -5,7 +5,7 @@ import traceback
 import lxml.etree
 import numpy
 
-from .utils.base_utils import *
+from dlpf.utils.base_utils import *
 
 logger = logging.getLogger(__name__)
 

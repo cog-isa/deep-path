@@ -6,8 +6,8 @@ import gym.utils
 import numpy
 from scipy.spatial.distance import euclidean
 
-from dlpf.utils.base_utils import load_yaml, copy_and_update
-from dlpf.io import TaskSet
+from ..utils.base_utils import load_yaml, copy_and_update
+from ..utils.io import TaskSet
 from .policies import get_path_policy, get_task_policy, \
     DEFAULT_PATH_POLICY, DEFAULT_TASK_POLICY
 from .utils import BY_PIXEL_ACTIONS, BY_PIXEL_ACTION_DIFFS
