@@ -1,30 +1,29 @@
 import glob
 import logging
-import numpy
 import os
 
+import numpy
 from sklearn.model_selection import ShuffleSplit
 
-from .base_utils import ensure_dir_exists, copy_files, copy_and_update, \
-    load_yaml, load_object_from_yaml
 from .gym_environ import load_environment_from_yaml
-from .keras_utils import LossHistory
 from .run import apply_agent
 from .stats import aggregate_application_base_stats, aggregate_application_run_stats
+from .utils.base_utils import ensure_dir_exists, copy_files, copy_and_update, \
+    load_yaml, load_object_from_yaml
+from .utils.keras_utils import LossHistory
 
 logger = logging.getLogger(__name__)
-
 
 TRAIN_DIR = 'train'
 TEST_DIR = 'test'
 
 
-def prepare_evaluation_splits(tasks_dir, to_dir, folds = 3, test_part = 0.3):
+def prepare_evaluation_splits(tasks_dir, to_dir, folds=3, test_part=0.3):
     all_task_fnames = numpy.array([fname
                                    for fname in os.listdir(tasks_dir)
                                    if os.path.isfile(os.path.join(tasks_dir, fname))])
     for fold_i, (train_idx, test_idx) in enumerate(
-            ShuffleSplit(n_splits = folds, test_size = test_part).split(len(all_task_fnames))):
+            ShuffleSplit(n_splits=folds, test_size=test_part).split(len(all_task_fnames))):
         train_dir = os.path.join(to_dir, str(fold_i), TRAIN_DIR)
         ensure_dir_exists(train_dir)
         copy_files(tasks_dir, all_task_fnames[train_idx], train_dir)
@@ -38,7 +37,6 @@ def evaluate_agent(environment_ctor,
                    agent_ctor,
                    folds_dir,
                    **apply_kwargs):
-    
     fold_dirs = filter(os.path.isdir, glob.glob(os.path.join(folds_dir, '*')))
     fold_dirs.sort()
     train_stats = []
@@ -54,7 +52,7 @@ def evaluate_agent(environment_ctor,
             cur_train_stat = apply_agent(train_env,
                                          agent,
                                          **copy_and_update(apply_kwargs,
-                                                           allow_train = True))
+                                                           allow_train=True))
             train_stats.append(cur_train_stat)
 
             logger.info('Fold %d test' % fold_i)
@@ -62,7 +60,7 @@ def evaluate_agent(environment_ctor,
             cur_test_stat = apply_agent(test_env,
                                         agent,
                                         **copy_and_update(apply_kwargs,
-                                                          allow_train = False))
+                                                          allow_train=False))
             test_stats.append(cur_test_stat)
     return train_stats, test_stats
 
@@ -73,7 +71,7 @@ def evaluate_agent_with_configs(environment_conf_fname,
                                 apply_conf):
     def environment_ctor(tasks_dir):
         return load_environment_from_yaml(environment_conf_fname,
-                                          tasks_dir = tasks_dir)
+                                          tasks_dir=tasks_dir)
 
     inner_batch_stats = []
     inner_epoch_stats = []
@@ -87,12 +85,12 @@ def evaluate_agent_with_configs(environment_conf_fname,
         else:
             first_agent_ctor_call.append(1)
         return load_object_from_yaml(agent_conf_fname,
-                                     input_shape = input_shape,
-                                     number_of_actions = number_of_actions,
-                                     model_callbacks = [keras_hist])
+                                     input_shape=input_shape,
+                                     number_of_actions=number_of_actions,
+                                     model_callbacks=[keras_hist])
 
     apply_kwargs = load_yaml(apply_conf)
-    
+
     train_stats, test_stats = evaluate_agent(environment_ctor,
                                              agent_ctor,
                                              folds_dir,

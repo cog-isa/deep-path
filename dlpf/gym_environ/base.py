@@ -1,9 +1,9 @@
 import logging
-import numpy
 
 import gym
 import gym.spaces
 import gym.utils
+import numpy
 from scipy.spatial.distance import euclidean
 
 from dlpf.base_utils import load_yaml, copy_and_update
@@ -26,9 +26,9 @@ class InfoValues:
 
     OBSTACLE = 'OBS'
     OUT_OF_FIELD = 'OOF'
-    
-    GOOD = frozenset({ OBSTACLE, OUT_OF_FIELD })
-    BAD = frozenset({ OK, DONE })
+
+    GOOD = frozenset({OBSTACLE, OUT_OF_FIELD})
+    BAD = frozenset({OK, DONE})
 
 
 class BasePathFindingEnv(gym.Env):
@@ -64,14 +64,14 @@ class BasePathFindingEnv(gym.Env):
         return self._init_state()
 
     def _configure(self,
-                   tasks_dir = 'data/samples/imported/tasks',
-                   maps_dir = 'data/samples/imported/maps',
-                   map_shape = (501, 501),
-                   path_policy = DEFAULT_PATH_POLICY,
-                   task_policy = DEFAULT_TASK_POLICY,
-                   obstacle_punishment = DEFAULT_OBSTACLE_PUNISHMENT,
-                   local_goal_reward = DEFAULT_GOAL_REWARD,
-                   done_reward = DEFAULT_DONE_REWARD):
+                   tasks_dir='data/samples/imported/tasks',
+                   maps_dir='data/samples/imported/maps',
+                   map_shape=(501, 501),
+                   path_policy=DEFAULT_PATH_POLICY,
+                   task_policy=DEFAULT_TASK_POLICY,
+                   obstacle_punishment=DEFAULT_OBSTACLE_PUNISHMENT,
+                   local_goal_reward=DEFAULT_GOAL_REWARD,
+                   done_reward=DEFAULT_DONE_REWARD):
         self.observation_space = self._get_observation_space(map_shape)
         self.task_set = TaskSet(tasks_dir, maps_dir)
         self.task_policy = get_task_policy(task_policy)
@@ -82,7 +82,7 @@ class BasePathFindingEnv(gym.Env):
         self.local_goal_reward = local_goal_reward
         self.done_reward = done_reward
 
-    def _seed(self, seed = None):
+    def _seed(self, seed=None):
         self.np_random, seed1 = gym.utils.seeding.np_random(seed)
         return [seed1]
 
@@ -107,7 +107,7 @@ class BasePathFindingEnv(gym.Env):
     def _init_state(self):
         return self._get_state()
 
-    def _render(self, mode = 'human', close = False):
+    def _render(self, mode='human', close=False):
         pass
 
     def _visualize_episode(self, out_fname):
@@ -146,7 +146,7 @@ class BasePathFindingByPixelEnv(BasePathFindingEnv):
         logger.debug('Actor decided to go %s from %s to %s' % (BY_PIXEL_ACTIONS[action],
                                                                tuple(self.cur_position_discrete),
                                                                tuple(new_position)))
-        
+
         info = InfoValues.OK
         done = numpy.allclose(new_position, self.path_policy.get_global_goal())
         if done:
@@ -183,8 +183,8 @@ class BasePathFindingByPixelEnv(BasePathFindingEnv):
         return self._get_state()
 
     def _configure(self,
-                   goal_error = 1,
-                   stop_game_after_invalid_action = False,
+                   goal_error=1,
+                   stop_game_after_invalid_action=False,
                    *args, **kwargs):
         super(BasePathFindingByPixelEnv, self)._configure(*args, **kwargs)
         self.goal_error = goal_error

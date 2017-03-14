@@ -1,11 +1,12 @@
-import json, pandas
+import json
+import pandas
 
 
 def create_scores_file(out_file, **scores):
     with open(out_file, 'w') as f:
-        json.dump(dict(_scores = scores),
+        json.dump(dict(_scores=scores),
                   f,
-                  indent = 4)
+                  indent=4)
 
 
 def create_charts_file(out_file, **charts_source):
@@ -13,7 +14,7 @@ def create_charts_file(out_file, **charts_source):
         column_names = []
         xs = {}
         columns = []
-        
+
         for chart_title, chart_data in charts_source.viewitems():
             chart_data = pandas.DataFrame(chart_data)
             if chart_data.shape[1] > 0:
@@ -28,13 +29,13 @@ def create_charts_file(out_file, **charts_source):
                 columns.append(map(float, chart_data[col]))
                 xs[cur_y_name] = cur_x_name
 
-        c3_config = {'columnNames' : column_names,
-                     'data' : {'xs' : xs,
-                               'columns' : columns},
-                     'axis' : {'x' : { 'label' : { 'text' : 'Epochs/Batches/Episodes' } },
-                               'y' : { 'label' : { 'text' : 'Metrics' } } },
-                     'legend' : { 'position' : 'right' }
+        c3_config = {'columnNames': column_names,
+                     'data': {'xs': xs,
+                              'columns': columns},
+                     'axis': {'x': {'label': {'text': 'Epochs/Batches/Episodes'}},
+                              'y': {'label': {'text': 'Metrics'}}},
+                     'legend': {'position': 'right'}
                      }
-        json.dump(dict(_charts = c3_config),
+        json.dump(dict(_charts=c3_config),
                   f,
-                  indent = 4)
+                  indent=4)

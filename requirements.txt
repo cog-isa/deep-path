@@ -1,1 +1,11 @@
-cython numpy scipy sklearn theano pandas keras lxml ujson matplotlib git+https://github.com/openai/gym h5py
+scipy
+pandas
+numpy
+matplotlib
+cython
+theano
+keras
+lxml
+ujson
+git+https://github.com/openai/gym
+h5py

@@ -2,21 +2,27 @@
 # from base_utils import *
 # logger = init_log(out_file = 'some_log.log', stderr = False)
 
-import logging, sys, os, cPickle, itertools, \
-    math, multiprocessing as mp, glob, pandas, \
-    collections, functools, traceback, re, numpy, \
-    ujson, importlib, yaml, shutil
+import cPickle
+import importlib
+import logging
+import math
+import os
+import shutil
+import sys
+import ujson
 
+import yaml
 
 LOGGING_LEVELS = {
-    'debug' : logging.DEBUG,
-    'info' : logging.INFO,
-    'warning' : logging.WARNING,
-    'error' : logging.ERROR,
-    'critical' : logging.CRITICAL
+    'debug': logging.DEBUG,
+    'info': logging.INFO,
+    'warning': logging.WARNING,
+    'error': logging.ERROR,
+    'critical': logging.CRITICAL
 }
 
-def init_log(out_file = None, stderr = False, level = logging.DEBUG, stderr_level = logging.DEBUG, file_level = logging.DEBUG):
+
+def init_log(out_file=None, stderr=False, level=logging.DEBUG, stderr_level=logging.DEBUG, file_level=logging.DEBUG):
     all_loggers = [logging.getLogger()]
 
     log_formatter = logging.Formatter('%(asctime)-15s %(levelname)10s %(message)s')
@@ -47,31 +53,36 @@ def init_log(out_file = None, stderr = False, level = logging.DEBUG, stderr_leve
     main_logger.info('Logger initialized')
     return main_logger
 
-def reporting_gen(in_gen, logger, report_every = 100, template = 'Processed %d items'):
+
+def reporting_gen(in_gen, logger, report_every=100, template='Processed %d items'):
     for i, el in enumerate(in_gen):
         yield el
         if i % report_every == 0:
             logger.info(template % i)
 
+
 def save_obj(obj, fname):
     with open(fname, 'wb') as f:
         cPickle.dump(obj, f, 2)
+
 
 def load_obj(fname):
     with open(fname, 'rb') as f:
         return cPickle.load(f)
 
+
 def load_json(fname):
     with open(fname, 'r') as f:
         return ujson.load(f)
 
+
 def save_json(obj, fname):
     with open(fname, 'w') as f:
-        ujson.dump(obj, f, indent = 4)
+        ujson.dump(obj, f, indent=4)
 
 
 class MultiIndexableDataset(object):
-    def __init__(self, values, parser = ujson.loads):
+    def __init__(self, values, parser=ujson.loads):
         self.values = values
         self.parser = parser
 
@@ -82,43 +93,16 @@ class MultiIndexableDataset(object):
         try:
             return (parser(self.values[i]) for i in idx)
         except TypeError:
-            
+
             return parser(self.values[idx])
 
 
 class FileReadingDataset(object):
-    def __init__(self, parser = load_json):
+    def __init__(self, parser=load_json):
         self.parser = parser
 
     def __getitem__(self, idx):
         return self.parser(idx)
-
-
-def set_theano_compiledir(dirname):
-    theano_config = os.environ.get('THEANO_FLAGS', '')
-    if not 'base_compiledir' in theano_config:
-        if theano_config:
-            os.environ['THEANO_FLAGS'] += ',base_compiledir=' + dirname
-        else:
-            os.environ['THEANO_FLAGS'] = 'base_compiledir=' + dirname
-
-
-_THEANO_DEVICES_TO_TRY = ['gpu1', 'gpu0']
-_GET_DEVICE = re.compile('device=([^,]+)')
-def try_assign_theano_on_free_gpu():
-    match = _GET_DEVICE.search(os.environ['THEANO_FLAGS'])
-    if match and match.group(1) == 'cpu':
-        return
-
-    import theano.sandbox.cuda
-    for dev in _THEANO_DEVICES_TO_TRY:
-        try:
-            theano.sandbox.cuda.use(dev)
-            return
-        except:
-            print traceback.format_exc()
-            pass
-    raise RuntimeError('no GPUs available')
 
 
 def no_copy_update(d, **updates):
@@ -137,7 +121,7 @@ def rename_and_update(d, key_format, **updates):
 
 
 def copy_except(src, fields_to_skip):
-    return { k : v for k, v in src.viewitems() if not k in fields_to_skip}
+    return {k: v for k, v in src.viewitems() if not k in fields_to_skip}
 
 
 def add_filename_suffix(fname, suffix):
@@ -191,6 +175,6 @@ def copy_files(from_dir, fnames, to_dir):
 
 
 def copy_yaml_configs_to_json(out_file, **configs):
-    result = { conf_title : load_yaml(conf_path)
-              for conf_title, conf_path in configs.viewitems() }
+    result = {conf_title: load_yaml(conf_path)
+              for conf_title, conf_path in configs.viewitems()}
     save_json(result, out_file)

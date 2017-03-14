@@ -1,21 +1,21 @@
 #!/usr/bin/env python
 
-import argparse, logging, os
+import argparse
+import logging
+import os
 
-os.environ['KERAS_BACKEND'] = 'theano'
-
-from dlpf.base_utils import init_log, LOGGING_LEVELS, ensure_dir_exists, \
-    copy_yaml_configs_to_json, rename_and_update
 from dlpf.benchmark import evaluate_agent_with_configs
-from dlpf.plot_utils import basic_plot_from_df, basic_plot_from_df_rolling_mean
-from dlpf.fglab_utils import create_scores_file, create_charts_file
-from dlpf.keras_utils import try_assign_theano_on_free_gpu
-from dlpf.perf_utils import Profiler
+from dlpf.utils.base_utils import init_log, LOGGING_LEVELS, ensure_dir_exists, \
+    copy_yaml_configs_to_json, rename_and_update
+from dlpf.utils.fglab_utils import create_scores_file, create_charts_file
+from dlpf.utils.keras_utils import try_assign_theano_on_free_gpu
+from dlpf.utils.perf_utils import Profiler
+from dlpf.utils.plot_utils import basic_plot_from_df, basic_plot_from_df_rolling_mean
 
 logger = logging.getLogger()
 
+os.environ['KERAS_BACKEND'] = 'theano'
 STATS_TITLES = 'train test batch epoch'.split(' ')
-
 SERIES_NOT_TO_PLOT = frozenset({'optimal_score'})
 
 if __name__ == '__main__':

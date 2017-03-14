@@ -1,9 +1,13 @@
-from .base_utils import *
-import lxml.etree, hashlib
+import collections
+import hashlib
+import traceback
 
+import lxml.etree
+import numpy
+
+from .utils.base_utils import *
 
 logger = logging.getLogger(__name__)
-
 
 PathFindingTask = collections.namedtuple('PathFindingTask',
                                          'title local_map start finish path'.split(' '))
@@ -11,12 +15,11 @@ PathFindingTask = collections.namedtuple('PathFindingTask',
 CompactPathFindingTask = collections.namedtuple('CompactPathFindingTask',
                                                 'map_id start finish path'.split(' '))
 
-
 COMPACT_MAP_EXT = '.npz'
 COMPACT_TASK_EXT = '.pickle'
 
 
-def load_from_xml(fname, ctor = PathFindingTask):
+def load_from_xml(fname, ctor=PathFindingTask):
     try:
         logger.info('Loading task from xml %s' % fname)
 
@@ -27,14 +30,14 @@ def load_from_xml(fname, ctor = PathFindingTask):
 
         local_map = numpy.array([map(int, row.split(' '))
                                  for row in tree.xpath('/root/map/grid/row/text()')],
-                                dtype = 'uint8')
+                                dtype='uint8')
         start_x = int(tree.xpath('/root/map/startx/text()')[0])
         start_y = int(tree.xpath('/root/map/starty/text()')[0])
         finish_x = int(tree.xpath('/root/map/finishx/text()')[0])
         finish_y = int(tree.xpath('/root/map/finishy/text()')[0])
 
         sections = tree.xpath('/root/log[1]/hplevel/section')
-        sections.sort(key = lambda n: int(n.get('number')))
+        sections.sort(key=lambda n: int(n.get('number')))
         path = [(int(s.get('start.y')),
                  int(s.get('start.x')))
                 for s in sections]
@@ -55,7 +58,7 @@ def load_from_xml(fname, ctor = PathFindingTask):
 
 def get_localmap_hash(local_map):
     return hashlib.md5(local_map.tostring()).hexdigest()
-    
+
 
 def save_to_compact(task, maps_dir, paths_dir):
     try:
@@ -65,7 +68,7 @@ def save_to_compact(task, maps_dir, paths_dir):
         if not os.path.exists(map_fname + '.npz'):
             logger.info('Saving map to %s' % map_fname)
             numpy.savez_compressed(map_fname, task.local_map)
-            
+
         compact = CompactPathFindingTask(map_id, task.start, task.finish, task.path)
         task_fname = os.path.join(paths_dir, task.title + COMPACT_TASK_EXT)
         save_obj(compact, task_fname)
@@ -74,7 +77,7 @@ def save_to_compact(task, maps_dir, paths_dir):
         logger.error('Could not save task %s:\n%s' % (task.title, traceback.format_exc()))
 
 
-def import_tasks_from_xml_to_compact(in_dir, out_dir, maps_subdir = 'maps', paths_subdir = 'paths', report_every = 100):
+def import_tasks_from_xml_to_compact(in_dir, out_dir, maps_subdir='maps', paths_subdir='paths', report_every=100):
     logger.info('Importing tasks from %s to %s' % (in_dir, out_dir))
 
     maps_dir = os.path.join(out_dir, maps_subdir)
@@ -82,8 +85,8 @@ def import_tasks_from_xml_to_compact(in_dir, out_dir, maps_subdir = 'maps', path
 
     for in_fname in reporting_gen(os.listdir(in_dir),
                                   logger,
-                                  report_every = report_every,
-                                  template = 'Imported %d tasks'):
+                                  report_every=report_every,
+                                  template='Imported %d tasks'):
         task = load_from_xml(os.path.join(in_dir, in_fname))
         if task is None:
             continue
