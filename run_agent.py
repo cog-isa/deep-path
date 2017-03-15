@@ -17,7 +17,7 @@ from dlpf.utils.plot_utils import basic_plot_from_df, basic_plot_from_df_rolling
 
 logger = logging.getLogger()
 
-os.environ['KERAS_BACKEND'] = 'theano'
+#os.environ['KERAS_BACKEND'] = 'theano'
 # os.environ['KERAS_BACKEND'] = 'tensorflow'
 # os.environ['THEANO_FLAGS'] = 'device=cpu'
 
