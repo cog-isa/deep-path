@@ -1,7 +1,6 @@
 import gym.envs.registration
 
-from dlpf.gym_environ.base import InfoValues, DEFAULT_DONE_REWARD, DEFAULT_GOAL_REWARD, DEFAULT_OBSTACLE_PUNISHMENT, \
-    load_environment_from_yaml
+from dlpf.gym_environ.base import InfoValues, load_environment_from_yaml
 from dlpf.gym_environ.policies import *
 
 gym.envs.registration.register('MultilayerPathFindingByPixelEnv-v1',

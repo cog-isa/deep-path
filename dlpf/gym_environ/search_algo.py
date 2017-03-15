@@ -4,9 +4,9 @@ from scipy.spatial.distance import euclidean
 
 from .utils import BY_PIXEL_ACTION_DIFFS
 
-
 StepResult = collections.namedtuple('StepResult',
                                     'must_continue best_next new_variants_with_ratings'.split(' '))
+
 
 class BaseSearchAlgo(object):
     def __init__(self):
@@ -18,8 +18,8 @@ class BaseSearchAlgo(object):
         self.finish = finish
 
         self.queue = [self.start]
-        self.ratings = { self.start : 0 }
-        self.backrefs = { self.start : self.start }
+        self.ratings = {self.start: 0}
+        self.backrefs = {self.start: self.start}
         self.visited_nodes = set()
 
     def walk_to_finish(self):
@@ -67,7 +67,7 @@ class BaseSearchAlgo(object):
         return result
 
     def _reorder_queue(self):
-        self.queue.sort(key = self.ratings.__getitem__)
+        self.queue.sort(key=self.ratings.__getitem__)
 
     def _gen_new_variants(self, pos):
         '''Proceed from the given state.
@@ -85,13 +85,13 @@ class EuclideanAStar(BaseSearchAlgo):
         return [(point, -euclidean(point, self.finish))
                 for point in all_new_points
                 if (not point in self.backrefs)
-                    and (0 <= point[0] < self.local_map.shape[0])
-                    and (0 <= point[1] < self.local_map.shape[1])
-                    and (self.local_map[point] == 0)]
+                and (0 <= point[0] < self.local_map.shape[0])
+                and (0 <= point[1] < self.local_map.shape[1])
+                and (self.local_map[point] == 0)]
 
 
 _SEARCH_ALGOS = {
-    'astar' : EuclideanAStar
+    'astar': EuclideanAStar
 }
 
 
@@ -101,6 +101,7 @@ def get_available_search_algos():
 
 DEFAULT_SEARCH_ALGO = 'astar'
 
-def get_search_algo(name = DEFAULT_SEARCH_ALGO, *args, **kwargs):
+
+def get_search_algo(name=DEFAULT_SEARCH_ALGO, *args, **kwargs):
     assert name in _SEARCH_ALGOS, "Unknown search algo %s" % name
     return _SEARCH_ALGOS[name](*args, **kwargs)

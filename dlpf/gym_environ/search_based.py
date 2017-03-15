@@ -1,14 +1,16 @@
-import collections, gym, logging, numpy
+import collections
+import logging
 
+import gym
+import numpy
+
+from dlpf.utils.keras_utils import get_tensor_reshaper, add_depth
+from dlpf.utils.plot_utils import scatter_plot
 from .base import BasePathFindingEnv, InfoValues
 from .flat import WithDistanceMapMixin, FlatObservationMixin
 from .search_algo import get_search_algo, DEFAULT_SEARCH_ALGO
-from ..plot_utils import scatter_plot
-from ..keras_utils import get_tensor_reshaper, add_depth
-
 
 logger = logging.getLogger(__name__)
-
 
 VisitedNodeInfo = collections.namedtuple('VisitedNodeInfo',
                                          'cur_id prev_id viewport goal'.split(' '))
@@ -18,7 +20,7 @@ class MapSpace(gym.Space):
     def __init__(self, shape):
         self.shape = shape
 
-    def sample(self):
+    def sample(self, seed=0):
         return {}
 
     def contains(self, x):
@@ -35,9 +37,9 @@ class BaseSearchBasedPathFindingEnv(BasePathFindingEnv):
         self.max_positions_to_consider = None
 
     def _configure(self,
-                   search_algo = DEFAULT_SEARCH_ALGO,
-                   max_positions_to_consider = 1000,
-                   stack_previous_viewports = 0,
+                   search_algo=DEFAULT_SEARCH_ALGO,
+                   max_positions_to_consider=1000,
+                   stack_previous_viewports=0,
                    *args, **kwargs):
         self._searcher = get_search_algo(search_algo)
         self.max_positions_to_consider = max_positions_to_consider
@@ -52,10 +54,10 @@ class BaseSearchBasedPathFindingEnv(BasePathFindingEnv):
                              self.path_policy.get_global_goal())
         init_pos = self.path_policy.get_start_position()
         self._considered_nodes = {}
-        self._considered_nodes = { init_pos : VisitedNodeInfo(init_pos,
-                                                              None,
-                                                              self._get_viewport_with_history(init_pos),
-                                                              init_pos == self.path_policy.get_global_goal()) }
+        self._considered_nodes = {init_pos: VisitedNodeInfo(init_pos,
+                                                            None,
+                                                            self._get_viewport_with_history(init_pos),
+                                                            init_pos == self.path_policy.get_global_goal())}
         return super(BaseSearchBasedPathFindingEnv, self)._init_state()
 
     def _get_state(self):
@@ -75,7 +77,8 @@ class BaseSearchBasedPathFindingEnv(BasePathFindingEnv):
             self._considered_nodes.update((new_pos,
                                            VisitedNodeInfo(new_pos,
                                                            search_res.best_next,
-                                                           self._get_viewport_with_history(new_pos, prev = search_res.best_next),
+                                                           self._get_viewport_with_history(new_pos,
+                                                                                           prev=search_res.best_next),
                                                            new_pos == goal))
                                           for new_pos, _
                                           in search_res.new_variants_with_ratings)
@@ -85,7 +88,7 @@ class BaseSearchBasedPathFindingEnv(BasePathFindingEnv):
 
         return self._get_state(), 0.0, done, info
 
-    def _get_viewport_with_history(self, position, prev = None):
+    def _get_viewport_with_history(self, position, prev=None):
         result = [self._get_base_state(position)]
         empty = numpy.zeros_like(result[0])
 
@@ -110,30 +113,30 @@ class FlatSearchBasedPathFindingEnv(WithDistanceMapMixin, FlatObservationMixin, 
 
     def _get_observation_space(self, map_shape):
         return MapSpace(add_depth(self._get_flat_observation_shape(map_shape),
-                                  depth = self.stack_previous_viewports + 1))
+                                  depth=self.stack_previous_viewports + 1))
 
     def _visualize_episode(self, out_file):
-        scatter_plot(({'label' : 'obstacle',
-                       'data' : self.obstacle_points_for_vis,
-                       'color' : 'black',
-                       'marker' : 's'},
-                      {'label' : 'considered',
-                       'data' : [(x, y) for y, x in self._considered_nodes.viewkeys()],
-                       'color' : 'gold',
-                       'marker' : 'x'},
-                      {'label' : 'visited',
-                       'data' : [(x, y) for y, x in self._searcher.visited_nodes],
-                       'color' : 'green',
-                       'marker' : '.'},
-                      {'label' : 'goal',
-                       'data' : [reversed(self.path_policy.get_global_goal())],
-                       'color' : 'red',
-                       'marker' : '*'},
-                      {'label' : 'start',
-                       'data' : [reversed(self.path_policy.get_start_position())],
-                       'color' : 'red',
-                       'marker' : '^'}),
-                     x_lim = (0, self.cur_task.local_map.shape[1]),
-                     y_lim = (0, self.cur_task.local_map.shape[0]),
-                     offset = (0.5, 0.5),
-                     out_file = out_file)
+        scatter_plot(({'label': 'obstacle',
+                       'data': self.obstacle_points_for_vis,
+                       'color': 'black',
+                       'marker': 's'},
+                      {'label': 'considered',
+                       'data': [(x, y) for y, x in self._considered_nodes.viewkeys()],
+                       'color': 'gold',
+                       'marker': 'x'},
+                      {'label': 'visited',
+                       'data': [(x, y) for y, x in self._searcher.visited_nodes],
+                       'color': 'green',
+                       'marker': '.'},
+                      {'label': 'goal',
+                       'data': [reversed(self.path_policy.get_global_goal())],
+                       'color': 'red',
+                       'marker': '*'},
+                      {'label': 'start',
+                       'data': [reversed(self.path_policy.get_start_position())],
+                       'color': 'red',
+                       'marker': '^'}),
+                     x_lim=(0, self.cur_task.local_map.shape[1]),
+                     y_lim=(0, self.cur_task.local_map.shape[0]),
+                     offset=(0.5, 0.5),
+                     out_file=out_file)

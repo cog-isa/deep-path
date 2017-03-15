@@ -24,7 +24,7 @@ class SequentialTaskPolicy(BaseTaskPolicy):
 
 
 class RandomTaskPolicy(BaseTaskPolicy):
-    def __init__(self, rand = None):
+    def __init__(self, rand=None):
         self.rand = rand or random.Random()
 
     def choose_next_task(self):
@@ -33,8 +33,8 @@ class RandomTaskPolicy(BaseTaskPolicy):
 
 
 _TASK_POLICIES = {
-    'sequential' : SequentialTaskPolicy,
-    'random' : RandomTaskPolicy,
+    'sequential': SequentialTaskPolicy,
+    'random': RandomTaskPolicy,
 }
 DEFAULT_TASK_POLICY = 'random'
 
@@ -43,6 +43,6 @@ def get_available_task_policies():
     return list(_TASK_POLICIES.keys())
 
 
-def get_task_policy(name = DEFAULT_TASK_POLICY, *args, **kwargs):
+def get_task_policy(name=DEFAULT_TASK_POLICY, *args, **kwargs):
     assert name in _TASK_POLICIES, "Unknown task policy %s" % name
     return _TASK_POLICIES[name](*args, **kwargs)

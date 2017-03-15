@@ -112,8 +112,6 @@ def get_flat_state(np.ndarray[np.uint8_t, ndim = 2] local_map,
                                                             2 * vision_range + 1))
     result *= -1 # everything is obstacle by default
 
-#     logger.debug('Map:\n%s' % local_map)
-
     cdef int cur_pos_y = cur_pos[0]
     cdef int cur_pos_x = cur_pos[1]
     cdef int y_viewport_left_top = cur_pos_y - vision_range
@@ -123,9 +121,6 @@ def get_flat_state(np.ndarray[np.uint8_t, ndim = 2] local_map,
     cdef int y_to = min(cur_pos_y + vision_range + 1, local_map.shape[0])
     cdef int x_from = max(0, x_viewport_left_top)
     cdef int x_to = min(cur_pos_x + vision_range + 1, local_map.shape[1])
-#         logger.debug('Pos %s, viewport lt %s, cropped %s' % (self.cur_position_discrete,
-#                                                              (y_viewport_left_top, x_viewport_left_top),
-#                                                              ((y_from, x_from), (y_to, x_to))))
 
     cdef int x, y, border_i
     cdef tuple border
@@ -139,11 +134,9 @@ def get_flat_state(np.ndarray[np.uint8_t, ndim = 2] local_map,
     if y_from <= y_goal < y_to and x_from <= x_goal < x_to:
         result[y_goal - y_viewport_left_top, x_goal - x_viewport_left_top] = done_reward
     else: # find intersection of line <cur_pos, goal> with borders of view range and mark it
-#             logger.debug('Target out of view range %s, %s' % (self.cur_position_discrete,
-#                                                               goal))
         # NW, NE, SE, SW
-        corners = [(y_viewport_left_top,                   x_viewport_left_top),
-                   (y_viewport_left_top,                   x_viewport_left_top + result.shape[1] - 1),
+        corners = [(y_viewport_left_top,                       x_viewport_left_top),
+                   (y_viewport_left_top,                       x_viewport_left_top + result.shape[1] - 1),
                    (y_viewport_left_top + result.shape[0] - 1, x_viewport_left_top + result.shape[1] - 1),
                    (y_viewport_left_top + result.shape[0] - 1, x_viewport_left_top)]
 
@@ -158,13 +151,10 @@ def get_flat_state(np.ndarray[np.uint8_t, ndim = 2] local_map,
         best_dist = np.inf
         inter_point = None
         for border_i, border in enumerate(borders):
-#                 logger.debug('border %s' % repr(border))
             cur_inter_point = line_intersection(line_to_goal, border)
-#                 logger.debug('inter %s' % repr(cur_inter_point))
             if cur_inter_point is None:
                 continue
             cur_dist = euclidean(cur_inter_point, goal)
-#                 logger.debug('inter dist %s' % repr(cur_dist))
             if 0 <= cur_inter_point[0] - y_viewport_left_top < result.shape[0] \
                 and 0 <= cur_inter_point[1] - x_viewport_left_top < result.shape[1] \
                 and cur_dist < best_dist:
@@ -175,5 +165,4 @@ def get_flat_state(np.ndarray[np.uint8_t, ndim = 2] local_map,
         abs_distance_reward = absolute_distance_weight * (done_reward - target_on_border_reward) * abs_dist_normed
 
         result[inter_point[0] - y_viewport_left_top, inter_point[1] - x_viewport_left_top] = target_on_border_reward + abs_distance_reward
-#         logger.debug('Viewport:\n%s' % result)
     return result

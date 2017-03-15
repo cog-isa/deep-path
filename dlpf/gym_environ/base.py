@@ -6,17 +6,13 @@ import gym.utils
 import numpy
 from scipy.spatial.distance import euclidean
 
+from .policies import get_reward_policy, get_task_policy, \
+    DEFAULT_REWARD_POLICY, DEFAULT_TASK_POLICY
+from .utils import BY_PIXEL_ACTIONS, BY_PIXEL_ACTION_DIFFS
 from ..utils.base_utils import load_yaml, copy_and_update
 from ..utils.io import TaskSet
-from .policies import get_path_policy, get_task_policy, \
-    DEFAULT_PATH_POLICY, DEFAULT_TASK_POLICY
-from .utils import BY_PIXEL_ACTIONS, BY_PIXEL_ACTION_DIFFS
 
 logger = logging.getLogger(__name__)
-
-DEFAULT_DONE_REWARD = 10
-DEFAULT_GOAL_REWARD = 5
-DEFAULT_OBSTACLE_PUNISHMENT = 1
 
 
 class InfoValues:
@@ -67,16 +63,16 @@ class BasePathFindingEnv(gym.Env):
                    tasks_dir='data/samples/imported/tasks',
                    maps_dir='data/samples/imported/maps',
                    map_shape=(501, 501),
-                   path_policy=DEFAULT_PATH_POLICY,
+                   path_policy=DEFAULT_REWARD_POLICY,
                    task_policy=DEFAULT_TASK_POLICY,
-                   obstacle_punishment=DEFAULT_OBSTACLE_PUNISHMENT,
-                   local_goal_reward=DEFAULT_GOAL_REWARD,
-                   done_reward=DEFAULT_DONE_REWARD):
+                   obstacle_punishment=1,
+                   local_goal_reward=5,
+                   done_reward=10):
         self.observation_space = self._get_observation_space(map_shape)
         self.task_set = TaskSet(tasks_dir, maps_dir)
         self.task_policy = get_task_policy(task_policy)
         self.task_policy.reset(self.task_set)
-        self.path_policy = get_path_policy(path_policy)
+        self.path_policy = get_reward_policy(path_policy)
 
         self.obstacle_punishment = abs(obstacle_punishment)
         self.local_goal_reward = local_goal_reward
@@ -130,10 +126,9 @@ class BasePathFindingEnv(gym.Env):
 
 
 class BasePathFindingByPixelEnv(BasePathFindingEnv):
-    action_space = gym.spaces.Discrete(len(BY_PIXEL_ACTIONS))
-
     def __init__(self):
         super(BasePathFindingByPixelEnv, self).__init__()
+        self.action_space = gym.spaces.Discrete(len(BY_PIXEL_ACTIONS))
         self.cur_position_discrete = None
         self.goal_error = None
         self.stop_game_after_invalid_action = None

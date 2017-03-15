@@ -7,7 +7,8 @@ from keras.layers import Dense, Input, Activation
 from keras.models import Model
 from keras.optimizers import Optimizer
 
-from dlpf.utils.keras_utils import get_optimizer, choose_samples_per_epoch
+from dlpf.agents import DEFAULT_ACTION_POLICY
+from dlpf.utils.keras_utils import get_optimizer, choose_samples_per_epoch, DEFAULT_OPTIMIZER
 from .policies import get_action_policy
 from .training_data_gen import replay_train_data_generator
 
@@ -43,11 +44,11 @@ class BaseKerasAgent(object):
     def __init__(self,
                  input_shape=None,
                  number_of_actions=1,
-                 action_policy=get_action_policy(),
+                 action_policy=DEFAULT_ACTION_POLICY,
                  max_memory_size=250,
                  output_activation='linear',
                  loss='mean_squared_error',
-                 optimizer=get_optimizer(),
+                 optimizer=DEFAULT_OPTIMIZER,
                  model_metrics=[],
                  model_callbacks=[],
                  epoch_number=100,
