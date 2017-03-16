@@ -67,7 +67,7 @@ def get_optimizer(ctor=DEFAULT_OPTIMIZER, *args, **kwargs):
     return _OPTIMIZERS[ctor](*args, **kwargs)
 
 
-_THEANO_DEVICES_TO_TRY = ['gpu1', 'gpu0']
+_THEANO_DEVICES_TO_TRY = ['gpu', 'gpu0', 'gpu1']
 _GET_DEVICE = re.compile('device=([^,]+)')
 
 
@@ -79,11 +79,10 @@ def try_assign_theano_on_free_gpu():
     import theano.sandbox.cuda
     for dev in _THEANO_DEVICES_TO_TRY:
         try:
-            theano.sandbox.cuda.use(dev)
+            theano.sandbox.cuda.use(dev, force=True)
             return
         except:
-            print traceback.format_exc()
-            pass
+            logger.warning(traceback.format_exc())
     raise RuntimeError('no GPUs available')
 
 

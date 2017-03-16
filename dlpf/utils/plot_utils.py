@@ -1,11 +1,11 @@
 import itertools
 
 import matplotlib
+
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy
 import pandas
-
-matplotlib.use('Agg')
 
 LINES = '- -- -. : . , 0 v ^ < > 1 2 3 4 s p * h H + x D d | - _'.split(' ')
 MARKERS = '. , o v ^ < > 1 2 3 4 8 s p * h H + x D d | _'.split(' ')
@@ -97,6 +97,6 @@ def scatter_plot(config, invert_y=True, y_lim=None, x_lim=None, default_scale=10
               fancybox=True,
               shadow=True)
 
-    if not out_file is None:
+    if out_file is not None:
         fig.savefig(out_file)
     return fig, ax

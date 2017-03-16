@@ -10,7 +10,7 @@ from .policies import get_path_policy, get_task_policy, \
     DEFAULT_PATH_POLICY, DEFAULT_TASK_POLICY
 from .utils import BY_PIXEL_ACTIONS, BY_PIXEL_ACTION_DIFFS
 from ..utils.base_utils import load_yaml, copy_and_update
-from ..utils.io import TaskSet
+from ..utils.task_utils import TaskSet
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +37,9 @@ class BasePathFindingEnv(gym.Env):
         self.obstacle_punishment = None
         self.local_goal_reward = None
         self.done_reward = None
+
+    def __repr__(self):
+        return self.__class__.__name__
 
     def get_episode_stat(self):
         return {}

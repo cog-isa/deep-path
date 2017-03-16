@@ -7,7 +7,7 @@ from keras.layers import Dense, Input, Activation
 from keras.models import Model
 from keras.optimizers import Optimizer
 
-from dlpf.agents import DEFAULT_ACTION_POLICY
+from dlpf.agents.policies.action import DEFAULT_ACTION_POLICY
 from dlpf.utils.keras_utils import get_optimizer, choose_samples_per_epoch, DEFAULT_OPTIMIZER
 from .policies import get_action_policy
 from .training_data_gen import replay_train_data_generator
@@ -111,6 +111,9 @@ class BaseKerasAgent(object):
 
         self._build_model()
 
+    def __repr__(self):
+        return self.__class__.__name__
+
     ##############################################################
     ###################### Basic agent logic #####################
     ##############################################################
@@ -123,6 +126,7 @@ class BaseKerasAgent(object):
         self.model.compile(self.optimizer,
                            loss=self.loss,
                            metrics=self.model_metrics)
+        logger.info('Making new agent: {}'.format(self.__class__.__name__))
         self.model.summary()
 
     def new_episode(self, goal):

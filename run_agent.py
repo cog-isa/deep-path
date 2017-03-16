@@ -17,7 +17,7 @@ from dlpf.utils.plot_utils import basic_plot_from_df, basic_plot_from_df_rolling
 
 logger = logging.getLogger()
 
-#os.environ['KERAS_BACKEND'] = 'theano'
+# os.environ['KERAS_BACKEND'] = 'theano'
 # os.environ['KERAS_BACKEND'] = 'tensorflow'
 # os.environ['THEANO_FLAGS'] = 'device=cpu'
 
@@ -60,6 +60,9 @@ if __name__ == '__main__':
 
     if args._id:
         args.output = os.path.join(args.output, args._id)
+
+    logger.info('Configuration:\n{0}'.format(args))
+
     ensure_dir_exists(args.output)
     try_assign_theano_on_free_gpu()
     keras_hist = LossHistory()

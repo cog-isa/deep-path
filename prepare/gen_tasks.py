@@ -5,7 +5,8 @@ import os
 import random
 
 from dlpf.gym_environ.search_algo import EuclideanAStar
-from dlpf.utils.io import load_map_from_compact, PathFindingTask, save_to_compact
+from dlpf.utils.base_utils import init_log, LOGGING_LEVELS
+from dlpf.utils.task_utils import load_map_from_compact, PathFindingTask, save_to_compact
 
 
 def _gen_point(map_shape):
@@ -27,6 +28,8 @@ if __name__ == '__main__':
                          help='Where to put tasks')
 
     args = aparser.parse_args()
+
+    logger = init_log(stderr=True)
 
     path_builder = EuclideanAStar()
 

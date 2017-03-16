@@ -70,6 +70,9 @@ class RandomStartAndFinishMixin(object):
     def get_start_position(self):
         return self.start
 
+    def get_local_goal(self):
+        return self.finish
+
     def get_global_goal(self):
         return self.finish
 
