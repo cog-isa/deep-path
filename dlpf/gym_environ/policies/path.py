@@ -4,7 +4,7 @@ import random
 from ..utils_compiled import check_finish_achievable
 
 
-class BaseRewardPolicy(object):
+class BasePathPolicy(object):
     def __init__(self):
         self.reset(None)
 
@@ -24,7 +24,7 @@ class BaseRewardPolicy(object):
         raise NotImplemented()
 
 
-class FollowGoldPath(BaseRewardPolicy):
+class FollowGoldPath(BasePathPolicy):
     def reset(self, task):
         super(FollowGoldPath, self).reset(task)
         self.cur_target_i = 1  # skip start position
@@ -39,7 +39,7 @@ class FollowGoldPath(BaseRewardPolicy):
         return True
 
 
-class GoStraightToFinish(BaseRewardPolicy):
+class GoStraightToFinish(BasePathPolicy):
     def get_local_goal(self):
         return self.task.path[-1]
 
@@ -54,7 +54,7 @@ class RandomStartAndFinishMixin(object):
 
     def reset(self, task):
         super(RandomStartAndFinishMixin, self).reset(task)
-        if not self.task is None:
+        if self.task is not None:
             local_map = self.task.local_map  # shortcut
             while True:
                 self.start = self._gen_point()
@@ -82,20 +82,20 @@ class RandomStartAndFinishStraight(RandomStartAndFinishMixin, GoStraightToFinish
     pass
 
 
-_REWARD_POLICIES = {
+_PATH_POLICIES = {
     'follow_gold': FollowGoldPath,
     'go_straight': GoStraightToFinish,
     'random_start_and_finish_straight': RandomStartAndFinishStraight,
 }
 
 
-def get_available_reward_policies():
-    return list(_REWARD_POLICIES.keys())
+def get_available_path_policies():
+    return list(_PATH_POLICIES.keys())
 
 
-DEFAULT_REWARD_POLICY = 'follow_gold'
+DEFAULT_PATH_POLICY = 'follow_gold'
 
 
-def get_reward_policy(name=DEFAULT_REWARD_POLICY, *args, **kwargs):
-    assert name in _REWARD_POLICIES, "Unknown path policy %s" % name
-    return _REWARD_POLICIES[name](*args, **kwargs)
+def get_path_policy(name=DEFAULT_PATH_POLICY, *args, **kwargs):
+    assert name in _PATH_POLICIES, "Unknown path policy %s" % name
+    return _PATH_POLICIES[name](*args, **kwargs)

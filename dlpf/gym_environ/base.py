@@ -6,8 +6,8 @@ import gym.utils
 import numpy
 from scipy.spatial.distance import euclidean
 
-from .policies import get_reward_policy, get_task_policy, \
-    DEFAULT_REWARD_POLICY, DEFAULT_TASK_POLICY
+from .policies import get_path_policy, get_task_policy, \
+    DEFAULT_PATH_POLICY, DEFAULT_TASK_POLICY
 from .utils import BY_PIXEL_ACTIONS, BY_PIXEL_ACTION_DIFFS
 from ..utils.base_utils import load_yaml, copy_and_update
 from ..utils.io import TaskSet
@@ -63,7 +63,7 @@ class BasePathFindingEnv(gym.Env):
                    tasks_dir='data/samples/imported/tasks',
                    maps_dir='data/samples/imported/maps',
                    map_shape=(501, 501),
-                   path_policy=DEFAULT_REWARD_POLICY,
+                   path_policy=DEFAULT_PATH_POLICY,
                    task_policy=DEFAULT_TASK_POLICY,
                    obstacle_punishment=1,
                    local_goal_reward=5,
@@ -72,7 +72,7 @@ class BasePathFindingEnv(gym.Env):
         self.task_set = TaskSet(tasks_dir, maps_dir)
         self.task_policy = get_task_policy(task_policy)
         self.task_policy.reset(self.task_set)
-        self.path_policy = get_reward_policy(path_policy)
+        self.path_policy = get_path_policy(path_policy)
 
         self.obstacle_punishment = abs(obstacle_punishment)
         self.local_goal_reward = local_goal_reward
