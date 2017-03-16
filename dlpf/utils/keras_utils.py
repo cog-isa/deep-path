@@ -83,7 +83,6 @@ def try_assign_theano_on_free_gpu():
             return
         except:
             logger.warning(traceback.format_exc())
-    raise RuntimeError('no GPUs available')
 
 
 def set_theano_compiledir(dirname):
