@@ -71,18 +71,19 @@ _THEANO_DEVICES_TO_TRY = ['gpu', 'gpu0', 'gpu1']
 _GET_DEVICE = re.compile('device=([^,]+)')
 
 
-def try_assign_theano_on_free_gpu():
-    match = _GET_DEVICE.search(os.environ.get('THEANO_FLAGS', ''))
-    if match and match.group(1) == 'cpu':
-        return
-
-    import theano.sandbox.cuda
-    for dev in _THEANO_DEVICES_TO_TRY:
-        try:
-            theano.sandbox.cuda.use(dev, force=True)
+def try_assign_on_free_gpu():
+    if get_backend() == 'th':
+        match = _GET_DEVICE.search(os.environ.get('THEANO_FLAGS', ''))
+        if match and match.group(1) == 'cpu':
             return
-        except:
-            logger.warning(traceback.format_exc())
+        logger.info('Try assigning theano(device={}) on free GPU...'.format(match.group(1)))
+        import theano.sandbox.cuda
+        for dev in _THEANO_DEVICES_TO_TRY:
+            try:
+                theano.sandbox.cuda.use(dev, force=True)
+                return
+            except:
+                logger.warning(traceback.format_exc())
 
 
 def set_theano_compiledir(dirname):

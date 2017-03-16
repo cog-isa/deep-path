@@ -8,7 +8,7 @@ from dlpf.benchmark import evaluate_agent_with_configs
 from dlpf.utils.base_utils import init_log, LOGGING_LEVELS, ensure_dir_exists, \
     copy_yaml_configs_to_json, rename_and_update
 from dlpf.utils.fglab_utils import create_scores_file, create_charts_file
-from dlpf.utils.keras_utils import try_assign_theano_on_free_gpu
+from dlpf.utils.keras_utils import try_assign_on_free_gpu
 from dlpf.utils.perf_utils import Profiler
 from dlpf.utils.plot_utils import basic_plot_from_df, basic_plot_from_df_rolling_mean
 
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     if args._id:
         args.output = os.path.join(args.output, args._id)
     ensure_dir_exists(args.output)
-    try_assign_theano_on_free_gpu()
+    try_assign_on_free_gpu()
 
     with Profiler(logger):
         all_stats = evaluate_agent_with_configs(args.env,

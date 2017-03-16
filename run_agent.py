@@ -11,7 +11,7 @@ from dlpf.stats import aggregate_application_run_stats, aggregate_application_ba
 from dlpf.utils.base_utils import init_log, LOGGING_LEVELS, ensure_dir_exists, \
     load_object_from_yaml, load_yaml
 from dlpf.utils.fglab_utils import create_scores_file
-from dlpf.utils.keras_utils import try_assign_theano_on_free_gpu, LossHistory
+from dlpf.utils.keras_utils import try_assign_on_free_gpu, LossHistory
 from dlpf.utils.perf_utils import Profiler
 from dlpf.utils.plot_utils import basic_plot_from_df, basic_plot_from_df_rolling_mean
 
@@ -61,10 +61,10 @@ if __name__ == '__main__':
     if args._id:
         args.output = os.path.join(args.output, args._id)
 
-    logger.info('Configuration:\n{0}'.format(args))
+    logger.info('Configuration: {0}'.format(args))
 
     ensure_dir_exists(args.output)
-    try_assign_theano_on_free_gpu()
+    try_assign_on_free_gpu()
     keras_hist = LossHistory()
 
     env = load_environment_from_yaml(args.env)
