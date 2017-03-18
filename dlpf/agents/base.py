@@ -1,6 +1,7 @@
 import collections
 import logging
 import random
+import numpy as np
 
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from keras.layers import Dense, Input, Activation
@@ -14,30 +15,8 @@ from .training_data_gen import replay_train_data_generator
 
 logger = logging.getLogger(__name__)
 
-
-def split_train_val_replay_gens(episodes, batch_size, actions_number, val_part=0.1, output_type='free_hinge',
-                                rand=random.Random()):
-    indices = range(len(episodes))
-    rand.shuffle(indices)
-
-    split_i = int(len(indices) * (1 - val_part))
-    train_indices = indices[:split_i]
-    val_indices = indices[split_i:]
-
-    return (replay_train_data_generator([episodes[i] for i in train_indices],
-                                        batch_size,
-                                        actions_number,
-                                        output_type,
-                                        rand=rand),
-            replay_train_data_generator([episodes[i] for i in val_indices],
-                                        batch_size,
-                                        actions_number,
-                                        output_type,
-                                        rand=rand))
-
-
 MemoryRecord = collections.namedtuple('MemoryRecord',
-                                      'observation action reward done')
+                                      'observation action reward next_observation done')
 
 
 class BaseKerasAgent(object):
@@ -46,6 +25,7 @@ class BaseKerasAgent(object):
                  number_of_actions=1,
                  action_policy=DEFAULT_ACTION_POLICY,
                  max_memory_size=250,
+                 q_gamma=0.1,
                  output_activation='linear',
                  loss='mean_squared_error',
                  optimizer=DEFAULT_OPTIMIZER,
@@ -65,6 +45,7 @@ class BaseKerasAgent(object):
                  split_rand=random.Random()):
         self.input_shape = input_shape
         self.number_of_actions = number_of_actions
+        self.q_gamma = q_gamma
         self.action_policy = get_action_policy(action_policy) \
             if isinstance(action_policy, (str, unicode)) \
             else get_action_policy(**action_policy)
@@ -130,31 +111,51 @@ class BaseKerasAgent(object):
         self.model.summary()
 
     def new_episode(self, goal):
-        self.memory.append(self._init_memory_for_new_episode())
+        self.memory.append([])
         self.memory = self.memory[-self.max_memory_size:]
         self.prev_step_info = None
         self.action_policy.new_episode()
         self.goal = goal
 
-    def act(self, observation, reward=None, done=None):
-        if reward is not None and self.prev_step_info is not None:  # that means that we can learn
-            self.prev_step_info['reward'] = reward
-            self._update_memory(self.memory[-1], **self.prev_step_info)
-
+    def act(self, observation):
         action_probabilities = self._predict_action_probabilities(observation)
         action = self.action_policy.choose_action(action_probabilities)
-
-        if not reward is None:  # that means that we can learn
-            self.prev_step_info = dict(observation=observation,
-                                       action_probabilities=action_probabilities,
-                                       action=action,
-                                       reward=reward,
-                                       done=done)
 
         return action
 
     def train_on_memory(self):
-        train_gen, val_gen = self._gen_train_val_data_from_memory()
+        indices = range(len(self.memory))
+        self.split_rand.shuffle(indices)
+
+        split_i = int(len(indices) * (1 - self.validation_part))
+        train_indices = indices[:split_i]
+        val_indices = indices[split_i:]
+
+        def predict_feature_r(indices):
+            q_predictions = []
+            for i in indices:
+                episode_predictions = []
+                for j in range(len(self.memory[i])):
+                    obs = self.memory[i][j].next_observation
+                    episode_predictions.append(self.q_gamma * np.max(self.model.predict(obs.reshape((1,) + obs.shape))))
+                q_predictions.append(episode_predictions)
+            return q_predictions
+
+        train_q_predictions = predict_feature_r(train_indices)
+        val_q_predictions = predict_feature_r(val_indices)
+
+        train_gen = replay_train_data_generator([self.memory[i] for i in train_indices],
+                                                train_q_predictions,
+                                                self.batch_size,
+                                                self.number_of_actions,
+                                                self.train_data_output_type,
+                                                rand=self.split_rand)
+        val_gen = replay_train_data_generator([self.memory[i] for i in val_indices],
+                                              val_q_predictions,
+                                              self.batch_size,
+                                              self.number_of_actions,
+                                              self.train_data_output_type,
+                                              rand=self.split_rand)
 
         total_samples = sum(len(ep) for ep in self.memory)
         if total_samples == 0:
@@ -183,24 +184,8 @@ class BaseKerasAgent(object):
     ##############################################################
     ################# Methods optional to implement ##############
     ##############################################################
-    def plot_layers(self, to_save=''):
-        pass
-
-    def _init_memory_for_new_episode(self):
-        return []
-
-    def _update_memory(self, episode_memory, observation=None, action_probabilities=None, action=None, reward=None,
-                       done=None):
-        episode_memory.append(MemoryRecord(observation, action, reward, done))
-
-    def _gen_train_val_data_from_memory(self):
-        '''If we have another self.memory strucutre, then we will need to override this'''
-        return split_train_val_replay_gens(self.memory,
-                                           self.batch_size,
-                                           self.number_of_actions,
-                                           val_part=self.validation_part,
-                                           output_type=self.train_data_output_type,
-                                           rand=self.split_rand)
+    def update_memory(self, observation, action, reward, next_observation, done):
+        self.memory[-1].append(MemoryRecord(observation, action, reward, next_observation, done))
 
     ##############################################################
     ################ Methods mandatory to implement ##############

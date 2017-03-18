@@ -41,15 +41,14 @@ def apply_agent(environment,
         reward, done = (initial_reward, False) if allow_train else (None, None)
 
         for step_i in range(max_steps):
-            action = agent.act(observation, reward=reward, done=done)
-            observation, reward, done, info = environment.step(action)
+            action = agent.act(observation)
+            next_observation, reward, done, info = environment.step(action)
             stat.add_step(reward=reward, info=info)
 
-            if not allow_train:
-                reward, done = (None, None)
-
+            if allow_train:
+                agent.update_memory(observation, action, reward, next_observation, done)
+            observation = next_observation
             if done:
-                agent.act(observation, reward=reward, done=done)
                 break
 
         if need_visualize and episode_i % visualize_each == 0:

@@ -30,12 +30,12 @@ def threadsafe_generator(f): #
 ctypedef numpy.float_t FLOAT_T
 
 
-def assign_outputs_free_hinge(numpy.ndarray[numpy.float32_t, ndim=1] result, int action, float reward):
-    result[action] = reward
+def assign_outputs_free_hinge(numpy.ndarray[numpy.float32_t, ndim=1] result, int action, float reward, float q_prediction):
+    result[action] = reward + q_prediction
 
 
-def assign_outputs_tanh_hinge(numpy.ndarray[numpy.float32_t, ndim=1] result, int action, float reward):
-    result[action] = numpy.tanh(reward)
+def assign_outputs_tanh_hinge(numpy.ndarray[numpy.float32_t, ndim=1] result, int action, float reward, float q_prediction):
+    result[action] = numpy.tanh(reward + q_prediction)
 
 
 def softmax(numpy.ndarray[numpy.float32_t, ndim=1] p):
@@ -43,9 +43,9 @@ def softmax(numpy.ndarray[numpy.float32_t, ndim=1] p):
     return e / e.sum()
 
 
-def assign_outputs_softmax(numpy.ndarray[numpy.float32_t, ndim=1] result, int action, float reward):
+def assign_outputs_softmax(numpy.ndarray[numpy.float32_t, ndim=1] result, int action, float reward, float q_prediction):
     cdef numpy.ndarray[numpy.float32_t, ndim=1] p = numpy.zeros((result.shape[0],), dtype = 'float32')
-    p[action] = reward
+    p[action] = reward + q_prediction
     result[:] = softmax(p)
 
 
@@ -57,7 +57,7 @@ _OUTPUT_TYPES = {
 
 
 @threadsafe_generator
-def replay_train_data_generator(list episodes, int batch_size, int actions_number, str output_type_name, rand):
+def replay_train_data_generator(list episodes, list q_predictions, int batch_size, int actions_number, str output_type_name, rand):
     assert output_type_name in _OUTPUT_TYPES, 'Unknown output type %s' % output_type_name
     if len(episodes) == 0:
         return
@@ -70,11 +70,13 @@ def replay_train_data_generator(list episodes, int batch_size, int actions_numbe
 
     output_assigner = _OUTPUT_TYPES[output_type_name]
     while True:
-        episode = episodes[rand.randint(0, len(episodes) - 1)]
-        step = episode[rand.randint(0, len(episode) - 1)]
+        e_i = rand.randint(0, len(episodes) - 1)
+        episode = episodes[e_i]
+        s_i = rand.randint(0, len(episode) - 1)
+        step = episode[s_i]
 
         input_batch[batch_i] = step.observation
-        output_assigner(output_batch[batch_i], step.action, step.reward)
+        output_assigner(output_batch[batch_i], step.action, step.reward, q_predictions[e_i][s_i])
 
         batch_i += 1
         if batch_i % batch_size == 0:
