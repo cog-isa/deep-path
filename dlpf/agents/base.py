@@ -23,6 +23,7 @@ class BaseKerasAgent(object):
     def __init__(self,
                  input_shape=None,
                  number_of_actions=1,
+                 episodes_number=5000,
                  action_policy=DEFAULT_ACTION_POLICY,
                  max_memory_size=250,
                  q_gamma=0.1,
@@ -48,7 +49,7 @@ class BaseKerasAgent(object):
         self.q_gamma = q_gamma
         self.action_policy = get_action_policy(action_policy) \
             if isinstance(action_policy, (str, unicode)) \
-            else get_action_policy(**action_policy)
+            else get_action_policy(episodes_number=episodes_number, **action_policy)
         self.max_memory_size = max_memory_size
         self.output_activation = output_activation
         self.loss = loss

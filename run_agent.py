@@ -69,14 +69,15 @@ if __name__ == '__main__':
 
     env = load_environment_from_yaml(args.env)
 
-    agent = load_object_from_yaml(args.agent,
-                                  input_shape=env.observation_space.shape,
-                                  number_of_actions=env.action_space.n,
-                                  model_callbacks=[keras_hist])
-
     apply_kwargs = load_yaml(args.apply)
     if int(apply_kwargs.get('visualize_each', 0)) > 0:
         apply_kwargs['visualization_dir'] = args.output
+
+    agent = load_object_from_yaml(args.agent,
+                                  input_shape=env.observation_space.shape,
+                                  number_of_actions=env.action_space.n,
+                                  episodes_number=apply_kwargs['episodes_number'],
+                                  model_callbacks=[keras_hist])
 
     with Profiler(logger):
         run_stats = apply_agent(env, agent, **apply_kwargs)

@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 def apply_agent(environment,
                 agent,
-                episodes_number=3000,
+                episodes_number=5000,
                 max_steps=100,
                 initial_reward=0,
                 allow_train=False,

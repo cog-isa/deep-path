@@ -4,7 +4,7 @@ kwargs:
   hidden_activation: relu
   dropout: 0.1
   output_activation: tanh
-  action_policy: {ctor: annealed_epsilon_greedy, eps: 0.9, final_eps: 0.1, episodes_number: 5000, degree: 2}
+  action_policy: {ctor: annealed_epsilon_greedy, eps: 0.9, final_eps: 0.1, degree: 2}
   batch_size: 64
   epoch_number: 100
   loss: hinge

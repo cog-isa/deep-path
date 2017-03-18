@@ -151,7 +151,6 @@ def load_object_by_name(name, *args, **kwargs):
 
 
 def load_object_from_dict(info, **override_kwargs):
-    # print info
     return load_object_by_name(info['ctor'],
                                *info.get('args', []),
                                **copy_and_update(info.get('kwargs', {}),

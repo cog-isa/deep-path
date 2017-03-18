@@ -17,7 +17,7 @@ class BaseActionPolicy(object):
 
 
 class PolynomiallyAnnealedPolicyMixin(object):
-    def __init__(self, eps=0.1, final_eps=0.01, episodes_number=5000, degree=2, *args, **kwargs):
+    def __init__(self, episodes_number, eps=0.1, final_eps=0.01, degree=2, *args, **kwargs):
         self.init_eps = eps
         self.final_eps = final_eps
         self.episodes_number = episodes_number

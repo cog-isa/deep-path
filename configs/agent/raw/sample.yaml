@@ -1,6 +1,6 @@
 ctor: dlpf.agents.our_dqn.OneLayerAgent
 kwargs:
-  action_policy: {ctor: annealed_epsilon_greedy, eps: 0.9, final_eps: 0.01, episodes_number: 5000, degree: 2}
+  action_policy: {ctor: annealed_epsilon_greedy, eps: 0.9, final_eps: 0.01, degree: 2}
   batch_size: 32
   epoch_number: 100
   loss: squared_hinge
