@@ -5,7 +5,7 @@
   },
   "agent": {
     "type": "string",
-    "default": "configs/agent/sample.yaml"
+    "default": "configs/agent/raw/sample.yaml"
   },
   "apply": {
     "type": "string",
