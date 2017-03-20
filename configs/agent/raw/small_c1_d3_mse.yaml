@@ -1,0 +1,41 @@
+ctor: dlpf.agents.our_dqn.ConvAndDenseAgent
+kwargs:
+  hidden_sizes:
+    - 50
+    - 50
+    - 50
+  hidden_activations:
+    - tanh
+    - tanh
+    - tanh
+  hidden_dropouts:
+    - 0.5
+    - 0.5
+    - 0.5
+  conv_cores:
+    - 32
+  conv_core_sizes:
+    - 3
+  conv_strides:
+    - 1
+  conv_activations:
+    - sigmoid
+  conv_dropouts:
+    - 0
+  conv_pooling:
+    - None
+  action_policy: {ctor: annealed_epsilon_greedy, eps: 0.9, final_eps: 0.1, degree: 2}
+  batch_size: 64
+  epoch_number: 100
+  loss: mean_squared_error
+  max_memory_size: 20
+  optimizer: {ctor: rmsprop}
+  passes_over_train_data: 100
+  validation_part: 0.1
+  keras_verbose: 2
+  early_stopping_patience: 3
+  train_gen_processes_number: 1
+  train_gen_queue_size: 100
+  reduce_lr_on_plateau_factor: 0.2
+  reduce_lr_on_plateau_patience: 100000
+  train_data_output_type: free_hinge

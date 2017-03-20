@@ -30,8 +30,8 @@ class BaseKerasAgent(object):
                  output_activation='linear',
                  loss='mean_squared_error',
                  optimizer=DEFAULT_OPTIMIZER,
-                 model_metrics=[],
-                 model_callbacks=[],
+                 model_metrics=None,
+                 model_callbacks=None,
                  epoch_number=100,
                  passes_over_train_data=2,
                  validation_part=0.1,
@@ -78,15 +78,17 @@ class BaseKerasAgent(object):
 
         self.goal = None
 
-        self.model_callbacks.append(ReduceLROnPlateau(monitor='val_loss',
-                                                      factor=self.reduce_lr_on_plateau_factor,
-                                                      patience=self.reduce_lr_on_plateau_patience,
-                                                      verbose=self.keras_verbose,
-                                                      mode='min'))
-        self.model_callbacks.append(EarlyStopping(monitor='val_loss',
-                                                  patience=self.early_stopping_patience,
-                                                  verbose=self.keras_verbose,
-                                                  mode='min'))
+        if self.model_callbacks is None:
+            self.model_callbacks = []
+        # self.model_callbacks.append(ReduceLROnPlateau(monitor='val_loss',
+        #                                               factor=self.reduce_lr_on_plateau_factor,
+        #                                               patience=self.reduce_lr_on_plateau_patience,
+        #                                               verbose=self.keras_verbose,
+        #                                               mode='min'))
+        # self.model_callbacks.append(EarlyStopping(monitor='val_loss',
+        #                                           patience=self.early_stopping_patience,
+        #                                           verbose=self.keras_verbose,
+        #                                           mode='min'))
 
         self.memory = []
         self.prev_step_info = None
