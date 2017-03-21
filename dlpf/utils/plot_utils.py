@@ -21,6 +21,7 @@ def basic_plot(title_data_tuples, out_file=None):
                                               STYLES_GEN):
         ax.plot(x, y, style, label=name)
     ax.legend()
+    ax.set_xlabel('Number of episodes')
     if not out_file is None:
         fig.savefig(out_file)
     return fig, ax

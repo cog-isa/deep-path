@@ -24,7 +24,18 @@ class WithDistanceMapMixin(object):
         if self.distance_map is not None:
             optimal_path_length = self.distance_map[self.path_policy.get_start_position()]
             if optimal_path_length > 0:
-                real_path_length = float(len(self._unique_agent_positions))
+                old_poisiotn = None
+                real_path_length = 0
+                for position in self._all_agent_positions:
+                    if old_poisiotn:
+                        diff = abs(old_poisiotn[0] - position[0]) + abs(old_poisiotn[1] - position[1])
+                        if diff == 1:
+                            real_path_length += 1
+                        elif diff == 2:
+                            real_path_length += 2 ** 0.5
+                    else:
+                        old_poisiotn = position
+                # real_path_length = float(len(self._unique_agent_positions))
                 stat['path_len_rate'] = real_path_length / optimal_path_length
             else:
                 stat['path_len_rate'] = numpy.inf
@@ -40,6 +51,7 @@ class WithDistanceMapMixin(object):
         self.distance_map = build_distance_map(numpy.array(self.cur_task.local_map, dtype=numpy.int),
                                                numpy.array(self.path_policy.get_global_goal(), dtype=numpy.int))
         self._unique_agent_positions = {self.path_policy.get_start_position()}
+        self._all_agent_positions = [self.path_policy.get_start_position()]
         self._sum_reward = 0.0
         return super(WithDistanceMapMixin, self)._init_state()
 
@@ -77,6 +89,7 @@ class WithDistanceMapMixin(object):
         observation, reward, done, info = super(WithDistanceMapMixin, self)._step(action)
         self._sum_reward += abs(reward)
         self._unique_agent_positions.update(tuple(p) for p in self._get_new_agent_positions())
+        self._all_agent_positions.append(tuple(p) for p in self._get_new_agent_positions())
         return observation, reward, done, info
 
     def _get_new_agent_positions(self):
