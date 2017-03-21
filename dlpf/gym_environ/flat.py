@@ -87,7 +87,7 @@ class WithDistanceMapMixin(object):
 
     def _step(self, action):
         observation, reward, done, info = super(WithDistanceMapMixin, self)._step(action)
-        self._sum_reward += abs(reward)
+        self._sum_reward += reward
         self._unique_agent_positions.update(tuple(p) for p in self._get_new_agent_positions())
         self._all_agent_positions.extend(tuple(p) for p in self._get_new_agent_positions())
         return observation, reward, done, info
