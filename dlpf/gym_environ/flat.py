@@ -33,14 +33,13 @@ class WithDistanceMapMixin(object):
                             real_path_length += 1
                         elif diff == 2:
                             real_path_length += 2 ** 0.5
-                    else:
-                        old_poisiotn = position
+                    old_poisiotn = position
                 # real_path_length = float(len(self._unique_agent_positions))
                 stat['path_len_rate'] = real_path_length / optimal_path_length
             else:
                 stat['path_len_rate'] = numpy.inf
 
-            minimal_sum_reward = optimal_path_length + self._get_done_reward()
+            minimal_sum_reward = 3*optimal_path_length + self._get_done_reward()
             stat['sum_reward_rate'] = self._sum_reward / minimal_sum_reward
         else:
             stat['path_len_rate'] = numpy.inf
@@ -48,7 +47,8 @@ class WithDistanceMapMixin(object):
         return stat
 
     def _init_state(self):
-        self.distance_map = build_distance_map(numpy.array(self.cur_task.local_map, dtype=numpy.int),
+        local_map = numpy.array(self.cur_task.local_map, dtype=numpy.float)
+        self.distance_map = build_distance_map(local_map,
                                                numpy.array(self.path_policy.get_global_goal(), dtype=numpy.int))
         self._unique_agent_positions = {self.path_policy.get_start_position()}
         self._all_agent_positions = [self.path_policy.get_start_position()]
@@ -68,7 +68,7 @@ class WithDistanceMapMixin(object):
         start_height = self.distance_map[tuple(self.path_policy.get_start_position())]
         abs_gain = numpy.exp(-new_height / start_height)
 
-        total_gain = sum(((1 - self.greedy_distance_reward_weight - self.absolute_distance_reward_weight) * true_gain,
+        total_gain = sum(((1 - self.greedy_distance_reward_weight - self.absolute_distance_reward_weight) * 3*true_gain,
                           self.greedy_distance_reward_weight * greedy_gain,
                           self.absolute_distance_reward_weight * abs_gain))
         logger.debug('true_gain %f, greedy gain %f, abs_gain %f, total %f' % (true_gain,
@@ -89,7 +89,7 @@ class WithDistanceMapMixin(object):
         observation, reward, done, info = super(WithDistanceMapMixin, self)._step(action)
         self._sum_reward += abs(reward)
         self._unique_agent_positions.update(tuple(p) for p in self._get_new_agent_positions())
-        self._all_agent_positions.append(tuple(p) for p in self._get_new_agent_positions())
+        self._all_agent_positions.extend(tuple(p) for p in self._get_new_agent_positions())
         return observation, reward, done, info
 
     def _get_new_agent_positions(self):
