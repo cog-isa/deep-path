@@ -39,7 +39,7 @@ class WithDistanceMapMixin(object):
             else:
                 stat['path_len_rate'] = numpy.inf
 
-            minimal_sum_reward = 3*optimal_path_length + self._get_done_reward()
+            minimal_sum_reward = optimal_path_length + self._get_done_reward()
             stat['sum_reward_rate'] = self._sum_reward / minimal_sum_reward
         else:
             stat['path_len_rate'] = numpy.inf
@@ -68,9 +68,10 @@ class WithDistanceMapMixin(object):
         start_height = self.distance_map[tuple(self.path_policy.get_start_position())]
         abs_gain = numpy.exp(-new_height / start_height)
 
-        total_gain = sum(((1 - self.greedy_distance_reward_weight - self.absolute_distance_reward_weight) * 3*true_gain,
-                          self.greedy_distance_reward_weight * greedy_gain,
-                          self.absolute_distance_reward_weight * abs_gain))
+        total_gain = sum(
+            ((1 - self.greedy_distance_reward_weight - self.absolute_distance_reward_weight) * true_gain,
+             self.greedy_distance_reward_weight * greedy_gain,
+             self.absolute_distance_reward_weight * abs_gain))
         logger.debug('true_gain %f, greedy gain %f, abs_gain %f, total %f' % (true_gain,
                                                                               greedy_gain,
                                                                               abs_gain,

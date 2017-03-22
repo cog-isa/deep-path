@@ -140,7 +140,7 @@ class BaseKerasAgent(object):
                 episode_predictions = []
                 for j in range(len(self.memory[i])):
                     obs = self.memory[i][j].next_observation
-                    episode_predictions.append(self.q_gamma * np.max(self.model.predict(obs.reshape((1,) + obs.shape))))
+                    episode_predictions.append(self.q_gamma * np.max(self._predict_action_probabilities(obs)))
                 q_predictions.append(episode_predictions)
             return q_predictions
 
