@@ -4,7 +4,7 @@
   "args": ["run", "--rm",
     "-v", "/opt/deep-path/deep-path:/notebook",
     "-v", "/opt/fglab/fglab-scripts/results/deep-path:/notebook/results",
-    "--volume=nvidia_driver_352.39:/usr/local/nvidia:ro",
+    "--volume=nvidia_driver_367.48:/usr/local/nvidia:ro",
     "--device=/dev/nvidiactl",
     "--device=/dev/nvidia-uvm",
     "--device=/dev/nvidia0",
