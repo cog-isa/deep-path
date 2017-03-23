@@ -8,7 +8,6 @@
     "--device=/dev/nvidiactl",
     "--device=/dev/nvidia-uvm",
     "--device=/dev/nvidia0",
-    "--device=/dev/nvidia1",
     "deep-path",
     "./run_agent.py",
     "--output",
