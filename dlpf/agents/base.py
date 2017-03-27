@@ -127,6 +127,7 @@ class BaseKerasAgent(object):
         return action
 
     def train_on_memory(self):
+        logger.info('Start learning....')
         total_samples = sum(len(ep) for ep in self.memory)
         if total_samples == 0:
             return
@@ -148,16 +149,14 @@ class BaseKerasAgent(object):
                     obs = self.memory[i][j].observation
                     next_obs = self.memory[i][j].next_observation
                     episode_predictions.append(self.q_gamma * np.max(self._predict_action_probabilities(next_obs)))
-                    episode_targets.append(self._predict_action_probabilities(obs))
+                    episode_targets.append(self._predict_action_probabilities(obs)[0])
                 q_predictions.append(episode_predictions)
                 targets.append(episode_targets)
             return q_predictions, targets
 
+        logger.info('Predicting Q values and target responses...')
         train_q_predictions, train_targets = predict_feature_r(train_indices)
         val_q_predictions, val_targets = predict_feature_r(val_indices)
-
-        logger.info(
-            'Start training: \n\t q_predictions = {}\n\t targets = {}'.format(train_q_predictions, train_targets))
 
         train_gen = replay_train_data_generator([self.memory[i] for i in train_indices],
                                                 train_q_predictions,
@@ -173,6 +172,8 @@ class BaseKerasAgent(object):
                                               self.number_of_actions,
                                               self.train_data_output_type,
                                               rand=self.split_rand)
+        logger.info(
+            'Start training: \n\t q_predictions = {}\n\t targets = {}'.format(train_q_predictions, train_targets))
 
         (train_samples_per_epoch,
          val_samples_per_epoch) = choose_samples_per_epoch(total_samples,
@@ -190,6 +191,7 @@ class BaseKerasAgent(object):
                                  max_q_size=self.train_gen_queue_size,
                                  nb_worker=self.train_gen_processes_number,
                                  pickle_safe=False)
+        logger.info('End learning')
 
     def get_episode_stat(self):
         return {}
