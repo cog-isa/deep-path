@@ -24,6 +24,7 @@ kwargs:
     - 0
   conv_pooling:
     - None
+  q_gamma: 0.4
   output_activation: linear
   action_policy: {ctor: annealed_epsilon_greedy, eps: 0.9, final_eps: 0.1, degree: 2}
   batch_size: 64

@@ -127,6 +127,10 @@ class BaseKerasAgent(object):
         return action
 
     def train_on_memory(self):
+        total_samples = sum(len(ep) for ep in self.memory)
+        if total_samples == 0:
+            return
+
         indices = range(len(self.memory))
         self.split_rand.shuffle(indices)
 
@@ -136,33 +140,39 @@ class BaseKerasAgent(object):
 
         def predict_feature_r(indices):
             q_predictions = []
+            targets = []
             for i in indices:
                 episode_predictions = []
+                episode_targets = []
                 for j in range(len(self.memory[i])):
-                    obs = self.memory[i][j].next_observation
-                    episode_predictions.append(self.q_gamma * np.max(self._predict_action_probabilities(obs)))
+                    obs = self.memory[i][j].observation
+                    next_obs = self.memory[i][j].next_observation
+                    episode_predictions.append(self.q_gamma * np.max(self._predict_action_probabilities(next_obs)))
+                    episode_targets.append(self._predict_action_probabilities(obs))
                 q_predictions.append(episode_predictions)
-            return q_predictions
+                targets.append(episode_targets)
+            return q_predictions, targets
 
-        train_q_predictions = predict_feature_r(train_indices)
-        val_q_predictions = predict_feature_r(val_indices)
+        train_q_predictions, train_targets = predict_feature_r(train_indices)
+        val_q_predictions, val_targets = predict_feature_r(val_indices)
+
+        logger.info(
+            'Start training: \n\t q_predictions = {}\n\t targets = {}'.format(train_q_predictions, train_targets))
 
         train_gen = replay_train_data_generator([self.memory[i] for i in train_indices],
                                                 train_q_predictions,
+                                                train_targets,
                                                 self.batch_size,
                                                 self.number_of_actions,
                                                 self.train_data_output_type,
                                                 rand=self.split_rand)
         val_gen = replay_train_data_generator([self.memory[i] for i in val_indices],
                                               val_q_predictions,
+                                              val_targets,
                                               self.batch_size,
                                               self.number_of_actions,
                                               self.train_data_output_type,
                                               rand=self.split_rand)
-
-        total_samples = sum(len(ep) for ep in self.memory)
-        if total_samples == 0:
-            return
 
         (train_samples_per_epoch,
          val_samples_per_epoch) = choose_samples_per_epoch(total_samples,
