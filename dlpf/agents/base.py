@@ -148,7 +148,10 @@ class BaseKerasAgent(object):
                 for j in range(len(self.memory[i])):
                     obs = self.memory[i][j].observation
                     next_obs = self.memory[i][j].next_observation
-                    episode_predictions.append(self.q_gamma * np.max(self._predict_action_probabilities(next_obs)))
+                    if self.memory[i][j].done:
+                        episode_predictions.append(0)
+                    else:
+                        episode_predictions.append(self.q_gamma * np.max(self._predict_action_probabilities(next_obs)))
                     episode_targets.append(self._predict_action_probabilities(obs)[0])
                 q_predictions.append(episode_predictions)
                 targets.append(episode_targets)
@@ -173,7 +176,7 @@ class BaseKerasAgent(object):
                                               self.train_data_output_type,
                                               rand=self.split_rand)
         logger.info(
-            'Start training: \n\t q_predictions = {}\n\t targets = {}'.format(train_q_predictions, train_targets))
+            'Start training: \n\t q_predictions = {}\n\t targets = {}'.format(train_q_predictions[0][0], train_targets[0][0]))
 
         (train_samples_per_epoch,
          val_samples_per_epoch) = choose_samples_per_epoch(total_samples,
