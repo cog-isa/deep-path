@@ -34,11 +34,11 @@ kwargs:
   conv_batchnorm:
     - True
     - True
-  output_activation: tanh
+  output_activation: linear
   action_policy: {ctor: annealed_epsilon_greedy, eps: 0.9, final_eps: 0.1, degree: 2}
   batch_size: 64
-  epoch_number: 100
-  loss: squared_hinge
+  epoch_number: 30
+  loss: mean_squared_error
   max_memory_size: 40
   optimizer: {ctor: adadelta}
   passes_over_train_data: 20
@@ -49,4 +49,4 @@ kwargs:
   train_gen_queue_size: 100
   reduce_lr_on_plateau_factor: 0.2
   reduce_lr_on_plateau_patience: 100000
-  train_data_output_type: tanh_hinge
+  train_data_output_type: free_hinge
