@@ -3,7 +3,7 @@ kwargs:
   done_reward: 10
   local_goal_reward: 5
   target_on_border_reward: 5
-  obstacle_punishment: 0
+  obstacle_punishment: -1
   greedy_distance_reward_weight: 0
   absolute_distance_reward_weight: 0
   absolute_distance_observation_weight: 0.1
